@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+</head>
+<body>
+    <h1>Sign In</h1>
+
+    <form id="signInForm">
+        <div class="form-group">
+            <label for="inputEmail">Email address</label>
+            <input type="email" class="form-control" id="inputEmail" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+            <label for="inputPassword">Password</label>
+            <input type="password" class="form-control" id="inputPassword" placeholder="Password">
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+    </form>
+
+    <div id="signInMessage" class="mt-3"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const signInForm = document.getElementById('signInForm');
+            const signInMessage = document.getElementById('signInMessage');
+
+            signInForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+
+                const email = document.getElementById('inputEmail').value;
+                const password = document.getElementById('inputPassword').value;
+
+                try {
+                    const response = await fetch('http://localhost:5233/api/Accounts/SignIn', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.text();
+                        
+
+                        const token = extractTokenFromCookie(data);
+                        // Lưu mã token vào Local Storage
+                        localStorage.setItem('token', token);
+                    
+                        window.location.href = '/home/index';
+                    } else {
+                        const data = await response.json();
+                        signInMessage.textContent = `Sign in failed: ${data}`;
+                    }
+
+                    function extractTokenFromCookie(cookieString) {
+                        // Tìm vị trí của chuỗi token trong cookie
+                        const tokenStartIndex = cookieString.indexOf('=') + 1;
+                        const tokenEndIndex = cookieString.indexOf(';');
+
+                        // Kiểm tra xem có vị trí kết thúc token hay không
+                        if (tokenEndIndex === -1) {
+                            
+                            const token = cookieString.slice(tokenStartIndex);
+                            return token;
+                        } else {
+                            // Trích xuất token từ vị trí bắt đầu đến vị trí kết thúc
+                            const token = cookieString.slice(tokenStartIndex, tokenEndIndex);
+                            return token;
+                        }
+                    }
+
+                    // Hàm giải mã JWT để lấy các phần tử trong token
+                    function parseJwt(token) {
+                        try {
+                            return JSON.parse(atob(token.split('.')[1]));
+                        } catch (error) {
+                            return null;
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error signing in:', error);
+                    signInMessage.textContent = 'Error signing in. Please try again later.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

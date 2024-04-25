@@ -1,0 +1,98 @@
+﻿@{
+    ViewData["Title"] = "Edit Blog";
+}
+
+<h1>@ViewData["Title"]</h1>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/datatables.min.js"></script>
+<link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<form id="editForm">
+    <div style="display: none;">
+        <!-- Ẩn trường BlogId -->
+        <label for="blogId">BlogId:</label>
+        <input type="text" id="blogId" name="blogId" readonly />
+    </div>
+    <div>
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" />
+    </div>
+    <div>
+        <label for="content">Content:</label>
+        <textarea id="content" name="content"></textarea>
+    </div>
+    <div style="display: none;">
+        <!-- Ẩn trường CreatedAt -->
+        <label for="userId">CreateDate:</label>
+        <input type="text" id="createdAt" name="createdAt" readonly />
+    </div>
+    <div style="display: none;">
+        <!-- Ẩn trường UserId -->
+        <label for="userId">UserId:</label>
+        <input type="text" id="userId" name="userId" readonly />
+    </div>
+    <!-- Add more fields as needed -->
+    <button type="button" onclick="updateBlog()">Update</button>
+</form>
+
+<script>
+    // Function to fetch blog details and populate the form
+    function fetchBlogDetails() {
+        // Extract the blog ID from the URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var blogId = urlParams.get('id');
+
+        $.get('http://localhost:5233/api/Products/' + blogId, function (data) {
+            $('#blogId').val(data.blogId);
+            $('#title').val(data.title);
+            CKEDITOR.instances.content.setData(data.content);
+            $('#createdAt').val(data.createdAt);
+            $('#userId').val(data.userId);
+            // Populate other fields as needed
+
+            // Trigger DataTable refresh to select the row corresponding to the edited blog
+            table_direct.row('#tbl1 tbody tr:eq(' + (blogId - 1) + ')').select();
+        });
+    }
+
+    // Function to update blog details
+    function updateBlog() {
+        var blogId = $('#blogId').val();
+        var title = $('#title').val();
+        var content = CKEDITOR.instances.content.getData(); // Retrieve CKEditor content
+        var createdAt = $('#createdAt').val();
+        var userId = $('#userId').val();
+
+        var updatedData = {
+            blogId: blogId,
+            title: title,
+            content: content,
+            createdAt: createdAt,
+            userId: userId
+            // Add other fields as needed
+        };
+
+        $.ajax({
+            url: 'http://localhost:5233/api/Products/' + blogId,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(updatedData),
+            success: function () {
+                alert('Blog updated successfully.');
+                // Redirect to another page or perform other actions as needed
+                window.location.href = 'http://localhost:5236/Home/Index';
+            },
+            error: function (xhr, status, error) {
+                alert('An error occurred while updating the blog: ' + error);
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        // Fetch blog details when the page loads
+        fetchBlogDetails();
+
+        // Initialize CKEditor for the content textarea
+        CKEDITOR.replace('content');
+    });
+</script>

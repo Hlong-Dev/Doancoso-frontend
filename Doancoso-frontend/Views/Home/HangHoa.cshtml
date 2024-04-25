@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Danh Sách Blog ";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/datatables.min.js"></script>
+<link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
+
+<table id="tbl1">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Tiêu Đề</th>
+            <th>Nội Dung</th>
+            <th>Ngày Tạo</th>
+            <th>Người Dùng</th>
+            <th>Hành Động</th>
+        </tr>
+    </thead>
+</table>
+
+<script>
+    $(document).ready(function () {
+        var token = localStorage.getItem('token');
+        if (token) {
+            // Nếu có mã token, thêm vào tiêu đề Authorization của mỗi yêu cầu AJAX
+            $.ajaxSetup({
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+        }
+
+        var url = "http://localhost:5233/api/Products";
+        $.get(url, {}, function (data) {
+            var ds = data;
+            var table_direct = new DataTable('#tbl1', {
+                data: ds,
+                columns: [
+                    { data: "blogId" },
+                    {
+                        data: "title",
+                        render: function (data, type, row) {
+                            var maxLength = 25; // Số ký tự tối đa
+                            if (data.length > maxLength) {
+                                return data.substring(0, maxLength) + "...";
+                            } else {
+                                return data;
+                            }
+                        }
+                    },
+                    {
+                        data: "content",
+                        render: function (data, type, row) {
+                            // Giới hạn số ký tự hiển thị
+                            var limitedContent = data.substring(0, 6);
+                            // Thêm nút "Xem chi tiết" để hiển thị toàn bộ nội dung
+                            return '<div style="display: flex; align-items: center;">' +
+                                '<div style="flex: 1;">' + limitedContent + '...</div>' +
+                                '<div style="margin-left: 10px;"><button style="font-size: 16px; padding: 5px 10px;" onclick="viewFullContent(' + row.blogId + ')">Xem chi tiết</button></div>' +
+                                '</div>';
+                        }
+                    },
+                    { data: "createdAt" },
+                    { data: "userId" },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            return '<button href="#" onclick="editItem(' + row.blogId + ')">Update</button>' +
+                                '<button onclick="deleteItem(' + row.blogId + ')">Delete</button>';
+                        }
+                    }
+                ]
+            });
+        });
+    });
+
+    function editItem(blogId) {
+        // Redirect to the update page with the correct blog ID
+        window.location.href = 'http://localhost:5236/Home/Update?id=' + blogId;
+    }
+
+    function viewDetails(blogId) {
+        // Redirect to the details page with the correct blog ID
+        window.location.href = 'http://localhost:5236/Home/Details?id=' + blogId;
+    }
+
+    function deleteItem(id) {
+        if (confirm("Are you sure you want to delete this item?")) {
+            $.ajax({
+                url: 'http://localhost:5233/api/Products/' + id,
+                method: 'DELETE',
+                success: function () {
+                    alert('Item deleted successfully.');
+                },
+                error: function (xhr, status, error) {
+                    alert('An error occurred while deleting the item: ' + error);
+                }
+            });
+        }
+    }
+
+    function viewFullContent(blogId) {
+        // Redirect to the details page with the correct blog ID to view full content
+        window.location.href = 'http://localhost:5236/Home/Details?id=' + blogId;
+    }
+
+</script>

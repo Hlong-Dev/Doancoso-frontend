@@ -1,0 +1,67 @@
+﻿@{
+    ViewData["Title"] = "Thêm Blog";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form id="addBlogForm">
+    <div>
+        <label for="title">Tiêu đề:</label>
+        <input type="text" id="title" name="title">
+    </div>
+    <div>
+        <label for="content">Nội dung:</label>
+        <textarea id="content" name="content"></textarea>
+    </div>
+    <div>
+        <label for="createdAt">Ngày tạo:</label>
+        <input type="text" id="createdAt" name="createdAt" readonly> <!-- ReadOnly -->
+    </div>
+    <div>
+        <label for="userId">ID Người dùng:</label>
+        <input type="text" id="userId" name="userId">
+    </div>
+    <button type="submit">Thêm Blog</button>
+</form>
+
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        // Initialize CKEditor for the content textarea
+        CKEDITOR.replace('content');
+
+        // Set current date and time for the createdAt field
+        var currentDateTime = new Date().toISOString().slice(0, 16);
+        $('#createdAt').val(currentDateTime);
+
+        // Handle form submission
+        $('#addBlogForm').submit(function (event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Collect form data
+            var formData = {
+                title: $('#title').val(),
+                content: CKEDITOR.instances.content.getData(), // Get content from CKEditor
+                createdAt: $('#createdAt').val(),
+                userId: $('#userId').val()
+            };
+
+            // Send AJAX request to add blog
+            $.ajax({
+                url: 'http://localhost:5233/api/Products',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (data) {
+                    alert('Blog đã được thêm thành công!');
+                    // Redirect or do something else after successful addition
+                },
+                error: function (xhr, status, error) {
+                    console.error('Đã xảy ra lỗi:', error);
+                    alert('Có lỗi xảy ra khi thêm blog!');
+                }
+            });
+        });
+    });
+</script>

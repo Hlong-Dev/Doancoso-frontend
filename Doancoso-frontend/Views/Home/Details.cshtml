@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        #blogTitle {
+            font-weight: bold;
+            text-align: center;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        #createdAt, #userId {
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+           
+            #userId::before {
+                content: "Người Dùng: ";
+            }
+
+        /* Định dạng của thẻ h1 */
+        h1#title {
+            font-size: 28px; /* Kích thước chữ */
+            font-weight: bold; /* In đậm */
+            text-align: center; /* Căn giữa */
+            margin-bottom: 20px; /* Khoảng cách dưới */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1 id="blogTitle" class="mb-4">@ViewData["Title"]</h1>
+        <div id="blogDetails">
+
+
+            <div class="mb-3">
+                <!-- Sử dụng thẻ h1 cho tiêu đề "Title" -->
+                <h1 id="title" style="font-weight:bold; text-align:center;"></h1>
+                <!-- Sử dụng thẻ p để hiển thị Created At -->
+                <p id="createdAt"></p>
+                <p id="userId"></p>
+                <div id="content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fetchBlogDetails() {
+            // Extract the blog ID from the URL
+            var urlParams = new URLSearchParams(window.location.search);
+            var blogId = urlParams.get('id');
+
+            $.get('http://localhost:5233/api/Products/' + blogId, function (data) {
+                $('#blogId').val(data.blogId);
+                $('#title').text(data.title); // Set the text of the h1 element
+
+                // Format createdAt to display Vietnamese date and time
+                var createdAt = new Date(data.createdAt);
+                var formattedCreatedAt = "ngày " + createdAt.getDate() + " tháng " + (createdAt.getMonth() + 1) + " năm " + createdAt.getFullYear() + " vào lúc " + createdAt.getHours() + "h" + createdAt.getMinutes() + "p";
+                $('#createdAt').text(formattedCreatedAt); // Set formatted Created At text
+
+                $('#userId').text(data.userId);
+
+                // Set content using HTML to render HTML elements
+                $('#content').html(data.content);
+            });
+        }
+
+        // Call the fetchBlogDetails function when the page loads
+        $(document).ready(function () {
+            fetchBlogDetails();
+        });
+    </script>
+
+</body>
+</html>

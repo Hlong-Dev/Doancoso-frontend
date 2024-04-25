@@ -1,0 +1,80 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Status</title>
+</head>
+<body>
+    <div id="loginStatus">
+        <span id="loginInfo"></span>
+        <button id="loginButton">Đăng nhập</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', checkLoginStatus);
+
+        const loginStatus = document.getElementById('loginStatus');
+        const loginInfo = document.getElementById('loginInfo');
+        const loginButton = document.getElementById('loginButton');
+
+        async function checkLoginStatus() {
+            try {
+                const token = localStorage.getItem('token'); // Lấy mã token từ localStorage
+                if (token) {
+                    // Nếu có mã token, hiển thị thông tin người dùng đã đăng nhập
+                    const response = await fetchUserInfo(token);
+                    if (response.ok) {
+                        const userInfo = await response.json();
+                        loginInfo.textContent = `Đã đăng nhập với tên người dùng: ${userInfo.email}`;
+                        loginButton.textContent = 'Đăng xuất';
+                        loginButton.addEventListener('click', logout);
+                    } else {
+                        console.error('Error fetching user info:', response.statusText);
+                    }
+
+                    async function fetchUserInfo(token) {
+                        try {
+                            const response = await fetch('http://localhost:5233/api/Accounts/UserInfo', {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            return response;
+                        } catch (error) {
+                            console.error('Error fetching user info:', error);
+                            throw error;
+                        }
+                    }
+                } else {
+                    // Nếu không có mã token, hiển thị nút đăng nhập
+                    loginInfo.textContent = 'Chưa đăng nhập';
+                    loginButton.textContent = 'Đăng nhập';
+                    loginButton.addEventListener('click', redirectToLogin);
+                }
+            } catch (error) {
+                console.error('Error checking login status:', error);
+            }
+        }
+
+        async function fetchUserInfo(token) {
+            return fetch('http://localhost:5233/api/Accounts/UserInfo', {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Gửi mã token trong header Authorization
+                }
+            });
+        }
+
+        async function redirectToLogin() {
+            window.location.href = 'http://localhost:5236/Account/SignIn';
+        }
+
+        async function logout() {
+            localStorage.removeItem('token'); // Xóa mã token khỏi localStorage khi đăng xuất
+            location.reload();
+        }
+    </script>
+</body>
+</html>

@@ -7,12 +7,57 @@
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/datatables.min.js"></script>
 <link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
+<style>
+    .containerr {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
 
+    form div {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .image-container {
+        max-width: 500px;
+        max-height: 500px;
+        overflow: hidden;
+    }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+        }
+</style>
+<div class="containerr">
 <table id="tbl1">
     <thead>
         <tr>
           
-            <th>Id</th>
+        
             <th>Tiêu Đề</th>
             <th>Nội Dung</th>
             <th>Ngày Tạo</th>
@@ -23,7 +68,7 @@
         </tr>
     </thead>
 </table>
-
+</div>
 <script>
     $(document).ready(function () {
         var token = localStorage.getItem('token');
@@ -44,7 +89,7 @@
             var table_direct = new DataTable('#tbl1', {
                 data: userBlogs, // Sử dụng danh sách bài viết của người dùng hiện tại
                 columns: [
-                    { data: "blogId" },
+              
                     {
                        
                         data: "title",
@@ -108,8 +153,11 @@
                 success: function () {
                     alert('Item deleted successfully.');
                 },
-                error: function (xhr, status, error) {
-                    alert('An error occurred while deleting the item: ' + error);
+                success: function () {
+                    alert('Item deleted successfully.');
+                    location.reload(); // Tải lại trang để cập nhật dữ liệu mới
+                
+
                 }
             });
         }

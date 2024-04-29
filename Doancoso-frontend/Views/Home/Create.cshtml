@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
         .containerr {
-            max-width: 800px;
+            max-width: 1120px;
             margin: 0 auto;
             padding: 20px;
             background-color: #fff;
@@ -66,7 +66,7 @@
             </div>
             <div>
                 <label for="slug">Slug</label>
-                <input id="slug" name="slug">
+                <input type="text" id="slug" name="slug">
             </div>
             <div class="hidden">
                 <label for="imageUrl">URL của hình ảnh:</label>
@@ -91,8 +91,9 @@
     <script>
         $(document).ready(function () {
            
-            CKEDITOR.replace('content');
-
+            CKEDITOR.replace('content', {
+                height: '1000px'
+            });
           
             var currentDateTime = new Date().toISOString().slice(0, 16);
             $('#createdAt').val(currentDateTime);
@@ -104,7 +105,7 @@
                 var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
                 $('#userId').val(userId);
                 $('#username').val(username);
-                $('#slug').val(slug);
+            
             }
             $('#imageInput').change(function () {
                 uploadImage(); // Gọi hàm uploadImage() khi có thay đổi trong input file

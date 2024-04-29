@@ -7,22 +7,43 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
-        /* Định dạng ảnh */
-        img {
-            width: 250px; /* Chiều rộng 100 pixel */
-            height: 200px; /* Chiều cao 100 pixel */
-        }
+       
+        
 
         .titleLink {
-            display: inline-block;
-            margin-top: 10px; /* Khoảng cách giữa title và ảnh */
+           
+            margin-top: 10px;
+            max-width: 500px;
+            overflow: hidden;       
+            margin-bottom: 5px; /* Khoảng cách dưới của title */
+            font-weight: bold; /* In đậm title */
+            font-size: 20px; /* Kích thước font nhỏ hơn */
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Số dòng tối đa */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #000000;
         }
 
+
             /* Định dạng text trong title */
-            .titleLink h4 {
-                margin-bottom: 5px; /* Khoảng cách dưới của title */
+         
+
+        .posts-entry .blog-entry-search-item .img-link {
+            width: 200px; /* Đặt chiều rộng là 200px */
+            height: 150px; /* Đặt chiều cao là 200px */
+            overflow: hidden; /* Ẩn phần của hình ảnh vượt quá kích thước đã đặt */
+        }
+
+            .posts-entry .blog-entry-search-item .img-link img {
+                width: 100%; /* Hình ảnh sẽ tự động co dãn để vừa với kích thước đã đặt */
+                height: 100%; /* Đảm bảo tỷ lệ hình ảnh không bị biến dạng */
+                object-fit: cover; /* Hình ảnh sẽ bị kéo ra để vừa với kích thước đã đặt */
+                object-position: center; /* Đảm bảo hình ảnh luôn được canh giữa */
+                border-radius: 0; /* Xóa bo góc nếu có */
             }
-       
+
     </style>
 </head>
 <body>
@@ -42,7 +63,9 @@
             <div class="row posts-entry">
                 <div class="col-lg-8" id="productsContainer">
                     <!-- Sẽ thêm các sản phẩm vào đây -->
+
                 </div>
+                
 
                 <div class="col-lg-4 sidebar">
                     <div class="sidebar-box search-form-wrap mb-4">
@@ -124,6 +147,18 @@
                         </ul>
                     </div>
                 </div>
+               
+                    
+             
+
+            </div>
+            <div class="pagination">
+                <button id="firstPage"><<</button>
+                <button id="prevPage"><</button>
+                <span id="currentPage"></span>
+                <button id="nextPage">></button>
+                <button id="lastPage">>></button>
+                <div id="pageButtons"></div>
             </div>
 
         </div>
@@ -132,53 +167,137 @@
     @Html.Partial("_FooterPartial")
 
     <script>
-        function fetchAllBlogDetails() {
-            $.get('http://localhost:5233/api/Products', function (data) {
-                // Lặp qua mỗi sản phẩm trong dữ liệu trả về
-                data.forEach(function (product) {
-                    // Tạo một div chứa thông tin sản phẩm
-                    var productEntry = $('<div class="blog-entry d-flex blog-entry-search-item"></div>');
+        $(document).ready(function () {
+            var currentPage = 1; // Trang hiện tại
 
-                    // Tạo phần tử hình ảnh và liên kết
+            // Số sản phẩm trên mỗi trang
+            var itemsPerPage = 7;
+
+            // Lấy tất cả sản phẩm
+            var allProducts = [];
+
+            // Khai báo hàm lấy sản phẩm trên trang hiện tại
+            function getCurrentPageItems() {
+                var startIndex = (currentPage - 1) * itemsPerPage;
+                var endIndex = startIndex + itemsPerPage;
+                return allProducts.slice(startIndex, endIndex);
+            }
+            $('#firstPage').click(function () {
+                currentPage = 1;
+                updateUI();
+            });
+
+            // Xử lý khi click vào nút Next double (>>)
+            $('#lastPage').click(function () {
+                currentPage = Math.ceil(allProducts.length / itemsPerPage);
+                updateUI();
+            });
+            // Khai báo hàm cập nhật giao diện khi chuyển trang
+            function updateUI() {
+                var currentItems = getCurrentPageItems();
+
+                // Xóa tất cả sản phẩm trước đó
+                $('#productsContainer').empty();
+
+                // Hiển thị sản phẩm trên trang hiện tại
+                currentItems.forEach(function (product) {
+                    // Tạo các phần tử sản phẩm
+                    var productEntry = $('<div class="blog-entry d-flex blog-entry-search-item"></div>');
                     var imageLink = $('<a href="single.html" class="img-link me-4"></a>');
                     var imageElement = $('<img src="" alt="Image" class="img-fluid">').attr('src', product.imageUrl);
                     imageLink.append(imageElement);
-
-                    // Tạo một div chứa thông tin sản phẩm
                     var productInfoDiv = $('<div></div>');
                     var userNameElement = $('<span class="date userName"></span>').text(product.userName);
+                    var dashElement = $('<span class="dash"> - </span>');
                     var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
                     var titleLink = $('<a class="titleLink" href=""></a>').attr('href', '/Home/single?slug=' + product.slug).text(product.title);
-
-
                     var titleElement = $('<h2></h2>').append(titleLink);
-                    // var contentElement = $('<p class="content"></p>').html(product.content);
+                    var contentElement = $('<p class="content"></p>').html(truncateContent(product.content, 100)); // Giới hạn nội dung tại đây (100 ký tự)
                     var readMoreLink = $('<p><a href="#" class="btn btn-sm btn-outline-primary readMoreLink">Read More</a></p>');
                     readMoreLink.find('a').attr('href', 'http://localhost:5236/Home/single?slug=' + product.slug);
-
-                    // Thêm các phần tử vào div chứa thông tin sản phẩm
-                    productInfoDiv.append(userNameElement, createdAtElement, titleElement /* contentElement */, readMoreLink);
-
-                    // Thêm các phần tử vào div chứa mỗi sản phẩm
+                    var userInfoDiv = $('<div></div>');
+                    userInfoDiv.append(userNameElement, dashElement, createdAtElement);
+                    productInfoDiv.append(userInfoDiv, titleElement, contentElement, readMoreLink); // Thêm userInfoDiv vào productInfoDiv
                     productEntry.append(imageLink, productInfoDiv);
-
-                    // Thêm div chứa mỗi sản phẩm vào container
                     $('#productsContainer').append(productEntry);
                 });
+
+
+                // Cập nhật trang hiện tại
+                $('#currentPage').text('Trang ' + currentPage);
+
+                // Ẩn hoặc hiển thị nút Previous và Next tùy thuộc vào trang hiện tại
+                $('#prevPage').prop('disabled', currentPage === 1);
+                $('#nextPage').prop('disabled', currentPage === Math.ceil(allProducts.length / itemsPerPage));
+            }
+
+            // Xử lý khi click vào nút Previous
+            $('#prevPage').click(function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateUI();
+                }
             });
-        }
+
+            // Xử lý khi click vào nút Next
+            $('#nextPage').click(function () {
+                if (currentPage < Math.ceil(allProducts.length / itemsPerPage)) {
+                    currentPage++;
+                    updateUI();
+                }
+            });
+
+            // Lấy tất cả sản phẩm từ API
+            $.get('http://localhost:5233/api/Products', function (data) {
+                allProducts = data.sort(function (a, b) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+                updateUI();
+            });
+        });
 
         // Hàm để định dạng createdAt
+        // Hàm để định dạng createdAt
         function formatCreatedAt(createdAt) {
-            var date = new Date(createdAt);
-            var formattedDate = "lúc " + date.getDate() + " tháng " + (date.getMonth() + 1) + " năm " + date.getFullYear() + " lúc " + date.getHours() + "h" + date.getMinutes() + "p";
-            return formattedDate;
+            var currentDate = new Date();
+            var createdDate = new Date(createdAt);
+
+            var timeDifference = Math.abs(currentDate - createdDate);
+            var minutesDifference = Math.round(timeDifference / (1000 * 60)); // Chuyển đổi sang phút
+
+            if (minutesDifference < 60) {
+                return minutesDifference + ' phút trước';
+            } else if (minutesDifference < 24 * 60) {
+                var hoursDifference = Math.floor(minutesDifference / 60);
+                return hoursDifference + ' giờ trước';
+            } else {
+                var daysDifference = Math.floor(minutesDifference / (24 * 60));
+                return daysDifference + ' ngày trước';
+            }
         }
 
-        // Gọi hàm fetchAllBlogDetails khi trang được tải
-        $(document).ready(function () {
-            fetchAllBlogDetails();
-        });
+
+        // Hàm cắt nội dung với độ dài tối đa
+        function truncateContent(content, maxLength) {
+            // Kiểm tra độ dài của nội dung
+            if (content.length > maxLength) {
+                // Tìm vị trí của ký tự cắt gần nhất, trước khi đến maxLength
+                var lastSpaceIndex = content.lastIndexOf(' ', maxLength);
+                // Kiểm tra xem có ký tự cắt không
+                if (lastSpaceIndex !== -1) {
+                    // Nếu có, cắt chuỗi và thêm dấu ba chấm
+                    return content.substring(0, lastSpaceIndex) + '...';
+                } else {
+                    // Nếu không có khoảng trắng, chỉ đơn giản cắt tại maxLength
+                    return content.substring(0, maxLength) + '...';
+                }
+            } else {
+                // Nếu nội dung không vượt quá maxLength, trả về nội dung ban đầu
+                return content;
+            }
+        }
+
+
     </script>
 
 </body>

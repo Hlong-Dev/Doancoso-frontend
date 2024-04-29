@@ -38,6 +38,7 @@ namespace Doancoso_frontend.Controllers
         {
             return View();
         }
+        
         public IActionResult Single()
         {
             return View();

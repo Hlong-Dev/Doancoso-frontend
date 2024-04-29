@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In</title>
+    <title>Sign Up</title>
     <style>
-     
+
+
 
         .containerr {
             width: 100%;
@@ -53,7 +54,7 @@
                 background-color: #000000;
             }
 
-        #signInMessage {
+        #signUpMessage {
             margin-top: 20px;
             color: red;
         }
@@ -64,11 +65,19 @@
     </style>
 </head>
 <body>
-    <div style="height: 80px;"></div>
+    <div style="height: 30px;"></div>
     <div class="containerr">
-        <h1>Đăng Nhập</h1>
+        <h1>Đăng Kí Tài Khoản Mới</h1>
 
-        <form id="signInForm">
+        <form id="signUpForm">
+            <div class="form-group">
+                <label for="inputFirstName">Họ Và Tên Đệm</label>
+                <input type="text" id="inputFirstName" placeholder="Enter first name">
+            </div>
+            <div class="form-group">
+                <label for="inputLastName">Tên</label>
+                <input type="text" id="inputLastName" placeholder="Enter last name">
+            </div>
             <div class="form-group">
                 <label for="inputEmail">Địa Chỉ Email</label>
                 <input type="email" id="inputEmail" placeholder="Enter email">
@@ -77,80 +86,64 @@
                 <label for="inputPassword">Mật Khẩu</label>
                 <input type="password" id="inputPassword" placeholder="Password">
             </div>
-            <button type="submit" class="btn btn-primary">Đăng Nhập</button>
+            <div class="form-group">
+                <label for="inputConfirmPassword">Xác Nhận Mật Khẩu</label>
+                <input type="password" id="inputConfirmPassword" placeholder="Confirm password">
+            </div>
+            <button type="submit" class="btn btn-primary">Đăng Kí</button>
         </form>
 
-        <div id="signInMessage"></div>
+        <div id="signUpMessage"></div>
 
-        <p>Bạn Chưa Có Tài Khoản? <a href="http://localhost:5236/account/signup">Đăng Kí Ngay</a>.</p>
+        <p>Bạn Đã Có Tài Khoản? <a href="http://localhost:5236/account/signin">Đăng Nhập Ngay!</a>.</p>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const signInForm = document.getElementById('signInForm');
-            const signInMessage = document.getElementById('signInMessage');
+            const signUpForm = document.getElementById('signUpForm');
+            const signUpMessage = document.getElementById('signUpMessage');
 
-            signInForm.addEventListener('submit', async function (event) {
+            signUpForm.addEventListener('submit', async function (event) {
                 event.preventDefault();
 
+                const firstName = document.getElementById('inputFirstName').value;
+                const lastName = document.getElementById('inputLastName').value;
                 const email = document.getElementById('inputEmail').value;
                 const password = document.getElementById('inputPassword').value;
+                const confirmPassword = document.getElementById('inputConfirmPassword').value;
+
+                // Kiểm tra mật khẩu và mật khẩu xác nhận
+                if (password !== confirmPassword) {
+                    signUpMessage.textContent = 'Password and confirm password do not match.';
+                    return;
+                }
 
                 try {
-                    const response = await fetch('http://localhost:5233/api/Accounts/SignIn', {
+                    const response = await fetch('http://localhost:5233/api/Accounts/SignUp', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
+                            firstName: firstName,
+                            lastName: lastName,
                             email: email,
-                            password: password
+                            password: password,
+                            confirmPassword: confirmPassword
                         })
                     });
 
                     if (response.ok) {
                         const data = await response.text();
-                        
-
-                        const token = extractTokenFromCookie(data);
-                        // Lưu mã token vào Local Storage
-                        localStorage.setItem('token', token);
-                    
-                        window.location.href = 'http://localhost:5236/';
+                        signUpMessage.textContent = 'Sign up successful. Please sign in to continue.';
                     } else {
                         const data = await response.json();
-                        signInMessage.textContent = `Sign in failed: ${data}`;
-                    }
-
-                    function extractTokenFromCookie(cookieString) {
-                        // Tìm vị trí của chuỗi token trong cookie
-                        const tokenStartIndex = cookieString.indexOf('=') + 1;
-                        const tokenEndIndex = cookieString.indexOf(';');
-
-                        // Kiểm tra xem có vị trí kết thúc token hay không
-                        if (tokenEndIndex === -1) {
-                            
-                            const token = cookieString.slice(tokenStartIndex);
-                            return token;
-                        } else {
-                            // Trích xuất token từ vị trí bắt đầu đến vị trí kết thúc
-                            const token = cookieString.slice(tokenStartIndex, tokenEndIndex);
-                            return token;
-                        }
-                    }
-
-                    // Hàm giải mã JWT để lấy các phần tử trong token
-                    function parseJwt(token) {
-                        try {
-                            return JSON.parse(atob(token.split('.')[1]));
-                        } catch (error) {
-                            return null;
-                        }
+                        signUpMessage.textContent = `Sign up failed: ${data}`;
                     }
 
                 } catch (error) {
-                    console.error('Error signing in:', error);
-                    signInMessage.textContent = 'Error signing in. Please try again later.';
+                    console.error('Error signing up:', error);
+                    signUpMessage.textContent = 'Error signing up. Please try again later.';
                 }
             });
         });

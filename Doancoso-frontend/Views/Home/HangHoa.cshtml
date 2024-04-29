@@ -11,11 +11,14 @@
 <table id="tbl1">
     <thead>
         <tr>
+          
             <th>Id</th>
             <th>Tiêu Đề</th>
             <th>Nội Dung</th>
             <th>Ngày Tạo</th>
             <th>Người Dùng</th>
+          
+            <th>Đường dẫn</th>
             <th>Hành Động</th>
         </tr>
     </thead>
@@ -35,12 +38,15 @@
 
         var url = "http://localhost:5233/api/Products";
         $.get(url, {}, function (data) {
-            var ds = data;
+            var currentUser = getUserFromToken(token);
+            var userBlogs = data.filter(blog => blog.userId === currentUser.userId); // Lọc các bài viết của người dùng hiện tại
+
             var table_direct = new DataTable('#tbl1', {
-                data: ds,
+                data: userBlogs, // Sử dụng danh sách bài viết của người dùng hiện tại
                 columns: [
                     { data: "blogId" },
                     {
+                       
                         data: "title",
                         render: function (data, type, row) {
                             var maxLength = 25; // Số ký tự tối đa
@@ -64,11 +70,18 @@
                         }
                     },
                     { data: "createdAt" },
-                    { data: "userId" },
+                    {
+                        data: "userName",
+                        render: function (data, type, row) {
+                            return data;
+                        }
+                    },
+                    {data: "slug"},
+
                     {
                         data: null,
                         render: function (data, type, row) {
-                            return '<button href="#" onclick="editItem(' + row.blogId + ')">Update</button>' +
+                            return '<button href="#" onclick="editItem(\'' + row.slug + '\')">Update</button>' +
                                 '<button onclick="deleteItem(' + row.blogId + ')">Delete</button>';
                         }
                     }
@@ -77,9 +90,9 @@
         });
     });
 
-    function editItem(blogId) {
+    function editItem(slug) {
         // Redirect to the update page with the correct blog ID
-        window.location.href = 'http://localhost:5236/Home/Update?id=' + blogId;
+        window.location.href = 'http://localhost:5236/Home/Update?slug=' + slug;
     }
 
     function viewDetails(blogId) {
@@ -107,4 +120,13 @@
         window.location.href = 'http://localhost:5236/Home/Details?id=' + blogId;
     }
 
+    function getUserFromToken(token) {
+        // Giải mã token để lấy thông tin người dùng
+        var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        return {
+            userId: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+            userName: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
+            // Các thông tin khác của người dùng có thể lấy từ token
+        };
+    }
 </script>

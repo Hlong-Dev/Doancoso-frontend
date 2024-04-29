@@ -4,37 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+ 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    @* <style>
-    #blogTitle {
-    font-weight: bold;
-    text-align: center;
-    font-size: 24px;
-    text-transform: uppercase;
-    }
 
-    #createdAt, #userId {
-    text-transform: uppercase;
-    font-size: 14px;
-    }
-
-
-    #userId::before {
-    content: "Người Dùng: ";
-    }
-
-    /* Định dạng của thẻ h1 */
-    h1#title {
-    font-size: 28px; /* Kích thước chữ */
-    font-weight: bold; /* In đậm */
-    text-align: center; /* Căn giữa */
-    margin-bottom: 20px; /* Khoảng cách dưới */
-    }
-    </style> *@
 </head>
 <body>
-    <div class="site-cover site-cover-sm same-height overlay single-page" style="background-image: url('wwwroot/images/hero_5.jpg');">
+    <div id="coverImage" class="site-cover site-cover-sm same-height overlay single-page" style="background-image: url('');">
+
         <div class="container">
             <div class="row same-height justify-content-center">
                 <div class="col-md-6">
@@ -45,7 +21,7 @@
                          @*    <figure class="author-figure mb-0 me-3 d-inline-block"><img src="images/person_1.jpg" alt="Image" class="img-fluid"></figure> *@
                             @*  <span class="d-inline-block mt-1">By Carl Atkinson</span> *@
                             @*  <span>&nbsp;-&nbsp; February 10, 2019</span> *@
-                            <span id="userId" class="d-inline-block mt-1"></span>
+                            <span id="userName" class="d-inline-block mt-1"></span>
                             <span id="createdAt"></span>
 
 
@@ -349,21 +325,25 @@
         function fetchBlogDetails() {
             // Extract the blog ID from the URL
             var urlParams = new URLSearchParams(window.location.search);
-            var blogId = urlParams.get('id');
+            var slug = urlParams.get('slug');
 
-            $.get('http://localhost:5233/api/Products/' + blogId, function (data) {
-                $('#blogId').val(data.blogId);
-                $('#title').text(data.title); // Set the text of the h1 element
+            $.get('http://localhost:5233/api/Products/' + slug, function (data) {
+                $('#slug').val(data.slug);
+                $('#title').text(data.title);
+                $('#imageUrl').text(data.imageUrl);
 
                 // Format createdAt to display Vietnamese date and time
                 var createdAt = new Date(data.createdAt);
                 var formattedCreatedAt = " - "+"ngày " + createdAt.getDate() + " tháng " + (createdAt.getMonth() + 1) + " năm " + createdAt.getFullYear() + " lúc " + createdAt.getHours() + "h" + createdAt.getMinutes() + "p";
                 $('#createdAt').text(formattedCreatedAt); // Set formatted Created At text
 
-                $('#userId').text(data.userId);
+                $('#userName').text(data.userName);
 
                 // Set content using HTML to render HTML elements
                 $('#content').html(data.content);
+                // Trong hàm fetchBlogDetails
+                $('#coverImage').css('background-image', 'url(' + data.imageUrl + ')');
+
             });
         }
 

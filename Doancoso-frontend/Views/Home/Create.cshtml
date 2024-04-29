@@ -1,67 +1,180 @@
-﻿@{
-    ViewData["Title"] = "Thêm Blog";
-}
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .containerr {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
 
-<h1>@ViewData["Title"]</h1>
+        form div {
+            margin-bottom: 20px;
+        }
 
-<form id="addBlogForm">
-    <div>
-        <label for="title">Tiêu đề:</label>
-        <input type="text" id="title" name="title">
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .hidden {
+            display: none;
+        }
+
+        .image-container {
+            max-width: 500px;
+            max-height: 500px;
+            overflow: hidden; 
+        }
+
+            .image-container img {
+                width: 100%; 
+                height: auto; 
+            }
+    </style>
+</head>
+<body>
+    <div class="containerr">
+        <input type="file" id="imageInput" accept="image/*">
+      
+
+        <form id="addBlogForm">
+            <div>
+                <label for="title">Tiêu đề:</label>
+                <input type="text" id="title" name="title">
+            </div>
+            <div>
+                <label for="content">Nội dung:</label>
+                <textarea id="content" name="content"></textarea>
+            </div>
+            <div>
+                <label for="slug">Slug</label>
+                <input id="slug" name="slug">
+            </div>
+            <div class="hidden">
+                <label for="imageUrl">URL của hình ảnh:</label>
+                <input type="text" id="imageUrl" name="imageUrl" readonly>
+            </div>
+            <div id="imageContainer" style="display: none;">
+                <label for="imageUrl">Ảnh:</label>
+                <div class="image-container">
+                    <img id="imagePreview" src="" alt="Ảnh">
+                </div>
+            </div>
+
+            <input type="hidden" id="createdAt" name="createdAt">
+            <input type="hidden" id="userId" name="userId">
+            <input type="hidden" id="username" name="username">
+            <button type="submit">Thêm Blog</button>
+        </form>
     </div>
-    <div>
-        <label for="content">Nội dung:</label>
-        <textarea id="content" name="content"></textarea>
-    </div>
-    <div>
-        <label for="createdAt">Ngày tạo:</label>
-        <input type="text" id="createdAt" name="createdAt" readonly> <!-- ReadOnly -->
-    </div>
-    <div>
-        <label for="userId">ID Người dùng:</label>
-        <input type="text" id="userId" name="userId">
-    </div>
-    <button type="submit">Thêm Blog</button>
-</form>
+    
+    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+           
+            CKEDITOR.replace('content');
 
-<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script>
-    $(document).ready(function () {
-        // Initialize CKEditor for the content textarea
-        CKEDITOR.replace('content');
+          
+            var currentDateTime = new Date().toISOString().slice(0, 16);
+            $('#createdAt').val(currentDateTime);
 
-        // Set current date and time for the createdAt field
-        var currentDateTime = new Date().toISOString().slice(0, 16);
-        $('#createdAt').val(currentDateTime);
+            var token = localStorage.getItem('token');
+            if (token) {
+                var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+                var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+                $('#userId').val(userId);
+                $('#username').val(username);
+                $('#slug').val(slug);
+            }
+            $('#imageInput').change(function () {
+                uploadImage(); // Gọi hàm uploadImage() khi có thay đổi trong input file
+            });
+          
+            $('#addBlogForm').submit(function (event) {
+                event.preventDefault(); 
 
-        // Handle form submission
-        $('#addBlogForm').submit(function (event) {
-            event.preventDefault(); // Prevent the default form submission
+               
+                var formData = {
+                    title: $('#title').val(),
+                    content: CKEDITOR.instances.content.getData(), 
+                    createdAt: $('#createdAt').val(),
+                    userId: $('#userId').val(),
+                    username: $('#username').val(),
+                    imageUrl: $('#imageUrl').val(),
+                    slug: $('#slug').val(),
+                };
 
-            // Collect form data
-            var formData = {
-                title: $('#title').val(),
-                content: CKEDITOR.instances.content.getData(), // Get content from CKEditor
-                createdAt: $('#createdAt').val(),
-                userId: $('#userId').val()
-            };
-
-            // Send AJAX request to add blog
-            $.ajax({
-                url: 'http://localhost:5233/api/Products',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(formData),
-                success: function (data) {
-                    alert('Blog đã được thêm thành công!');
-                    // Redirect or do something else after successful addition
-                },
-                error: function (xhr, status, error) {
-                    console.error('Đã xảy ra lỗi:', error);
-                    alert('Có lỗi xảy ra khi thêm blog!');
-                }
+        
+                $.ajax({
+                    url: 'http://localhost:5233/api/Products',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (data) {
+                        alert('Blog đã được thêm thành công!');
+                     
+                        window.location.href = 'http://localhost:5236/Home/HangHoa';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Đã xảy ra lỗi:', error);
+                        alert('Có lỗi xảy ra khi thêm blog!');
+                    }
+                });
             });
         });
-    });
-</script>
+
+
+        function uploadImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Vui lòng chọn một hình ảnh.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                url: 'http://localhost:5233/api/Products/upload',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (data) {
+                
+                    $('#imageUrl').val(data.url);
+                    $('#imagePreview').attr('src', data.url);
+                    $('#imageContainer').show();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Lỗi khi tải lên hình ảnh:', error);
+                    alert('Đã xảy ra lỗi khi tải lên hình ảnh.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

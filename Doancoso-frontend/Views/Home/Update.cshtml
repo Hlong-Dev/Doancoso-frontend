@@ -1,12 +1,58 @@
-﻿@{
-    ViewData["Title"] = "Edit Blog";
-}
-
+﻿
 <h1>@ViewData["Title"]</h1>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/datatables.min.js"></script>
 <link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
 <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<style>
+    .containerr {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+    }
+
+    form div {
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+
+    input, textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .image-container {
+        max-width: 700px;
+        max-height: 700px;
+        overflow: hidden; /* Đảm bảo ảnh không vượt quá kích thước container */
+    }
+
+        .image-container img {
+            width: 100%; /* Đảm bảo ảnh chiếm toàn bộ chiều rộng của container */
+            height: auto; /* Đảm bảo tỷ lệ khung hình bảo toàn */
+        }
+
+</style>
+<div class="containerr">
+    <input type="file" id="imageInput" accept="image/*">
+
 <form id="editForm">
     <div style="display: none;">
         <!-- Ẩn trường BlogId -->
@@ -21,65 +67,127 @@
         <label for="content">Content:</label>
         <textarea id="content" name="content"></textarea>
     </div>
-    <div style="display: none;">
+        <div>
+            <label for="slug">Slug</label>
+            <input id="slug" name="slug">
+        </div>
+    <div >
         <!-- Ẩn trường CreatedAt -->
         <label for="userId">CreateDate:</label>
         <input type="text" id="createdAt" name="createdAt" readonly />
     </div>
-    <div style="display: none;">
-        <!-- Ẩn trường UserId -->
-        <label for="userId">UserId:</label>
-        <input type="text" id="userId" name="userId" readonly />
+    <input type="hidden" id="userId" name="userId">
+    <div class="hidden">
+        <label for="userName">Tên người dùng:</label>
+        <input type="text" id="username" name="userName" readonly> <!-- ReadOnly -->
     </div>
-    <!-- Add more fields as needed -->
+        <div class="hidden">
+        <label for="imageUrl">Ảnh</label>
+        <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
+    </div>
+        <div>
+            <label for="imageUrl">Ảnh:</label>
+            <div class="image-container">
+                <img id="imagePreview" src="" alt="Ảnh">
+            </div>
+        </div>
     <button type="button" onclick="updateBlog()">Update</button>
 </form>
-
+</div>
 <script>
-    // Function to fetch blog details and populate the form
+    var token = localStorage.getItem('token');
+        if (token) {
+            var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+            var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            $('#userId').val(userId);
+     
+            var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+            $('#username').val(username);
+        }
+    $('#imageInput').change(function () {
+        uploadImage(); 
+    });
+   
     function fetchBlogDetails() {
-        // Extract the blog ID from the URL
         var urlParams = new URLSearchParams(window.location.search);
-        var blogId = urlParams.get('id');
+        var slug = urlParams.get('slug');
 
-        $.get('http://localhost:5233/api/Products/' + blogId, function (data) {
+        $.get('http://localhost:5233/api/Products/' + slug, function (data) {
             $('#blogId').val(data.blogId);
+            $('#slug').val(data.slug);
             $('#title').val(data.title);
             CKEDITOR.instances.content.setData(data.content);
             $('#createdAt').val(data.createdAt);
             $('#userId').val(data.userId);
-            // Populate other fields as needed
+            $('#userName').val(data.userName);
+            $('#imageUrl').val(data.imageUrl);
+            $('#imagePreview').attr('src', data.imageUrl);
 
-            // Trigger DataTable refresh to select the row corresponding to the edited blog
-            table_direct.row('#tbl1 tbody tr:eq(' + (blogId - 1) + ')').select();
+            var token = localStorage.getItem('token');
+            if (token) {
+                var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+
+                // Kiểm tra xem user ID của người dùng hiện tại có khớp với user ID của blog không
+                if (currentUserId !== data.userId) {
+                    alert('Bạn không có quyền chỉnh sửa blog này.');
+                    window.location.href = 'http://localhost:5236/Home/Index'; // Redirect to home page
+                }
+            } else {
+                // Nếu không có token, chuyển hướng đến trang đăng nhập hoặc xử lý tùy ý
+                window.location.href = 'http://localhost:5236/Account/Login';
+            }
         });
     }
 
     // Function to update blog details
+    // Function to update blog details
     function updateBlog() {
+        var userId = $('#userId').val(); // Lấy userId từ form
+        var token = localStorage.getItem('token'); // Lấy token từ localStorage
+        if (token) {
+            var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+            var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+
+            // Kiểm tra xem userId của người dùng hiện tại có khớp với userId từ form không
+            if (userId !== currentUserId) {
+                alert('Bạn không có quyền chỉnh sửa blog này.');
+                window.location.href = 'http://localhost:5236/Home/Index'; // Redirect to another page
+                return; // Dừng hàm ở đây nếu userId không khớp
+            }
+        } else {
+            alert('Bạn phải đăng nhập để chỉnh sửa blog.'); // Thông báo nếu không có token
+            window.location.href = 'http://localhost:5236/Account/Login'; // Redirect to login page
+            return; // Dừng hàm ở đây nếu không có token
+        }
+
+        // Tiếp tục thực hiện cập nhật blog nếu userId khớp
         var blogId = $('#blogId').val();
+        var slug = $('#slug').val();
         var title = $('#title').val();
-        var content = CKEDITOR.instances.content.getData(); // Retrieve CKEditor content
+        var content = CKEDITOR.instances.content.getData();
         var createdAt = $('#createdAt').val();
-        var userId = $('#userId').val();
+        var userName = $('#username').val();
+        var imageUrl = $('#imageUrl').val();
 
         var updatedData = {
             blogId: blogId,
+            slug: slug,
             title: title,
             content: content,
             createdAt: createdAt,
-            userId: userId
-            // Add other fields as needed
+            userId: userId,
+            userName: userName,
+            imageUrl: imageUrl
         };
 
         $.ajax({
-            url: 'http://localhost:5233/api/Products/' + blogId,
+            url: 'http://localhost:5233/api/Products/' + slug,
             method: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify(updatedData),
             success: function () {
                 alert('Blog updated successfully.');
-                // Redirect to another page or perform other actions as needed
                 window.location.href = 'http://localhost:5236/Home/Index';
             },
             error: function (xhr, status, error) {
@@ -87,12 +195,45 @@
             }
         });
     }
+    function uploadImage() {
+        const fileInput = document.getElementById('imageInput');
+        const file = fileInput.files[0];
 
-    $(document).ready(function () {
-        // Fetch blog details when the page loads
-        fetchBlogDetails();
+        if (!file) {
+            alert('Vui lòng chọn một hình ảnh.');
+            return;
+        }
 
-        // Initialize CKEditor for the content textarea
-        CKEDITOR.replace('content');
-    });
+        const formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: 'http://localhost:5233/api/Products/upload', // Đường dẫn tới endpoint upload
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                // Sau khi upload thành công, gán URL của hình ảnh vào trường imageUrl
+                $('#imageUrl').val(data.url);
+                $('#imagePreview').attr('src', data.url);
+            },
+            error: function (xhr, status, error) {
+                console.error('Lỗi khi tải lên hình ảnh:', error);
+                alert('Đã xảy ra lỗi khi tải lên hình ảnh.');
+            }
+        });
+    }
+$(document).ready(function () {
+    // Fetch blog details when the page loads
+    fetchBlogDetails();
+
+    // Initialize CKEditor for the content textarea
+    CKEDITOR.replace('content');
+
+    // Check if userId matches the current user's ID
+    
+});
+
+
 </script>

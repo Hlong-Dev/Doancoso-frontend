@@ -7,7 +7,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
-       
+        .product-info {
+            width: -webkit-fill-available; /* Đặt kích thước cố định cho phần product-info */
+            overflow: hidden; /* Ẩn nội dung vượt ra ngoài */
+        }
+
+        .category {
+            width: auto;
+            display: -webkit-inline-box;
+        }
+
+        .reading-time {
+            color: #b3b3b3;
+        }
+
+        .date.createdAt {
+            color: #b3b3b3;
+        }
+
+        .dash {
+            color: #b3b3b3;
+        }
+        .category-reading-time {
+            width: 494px;
+            display: -webkit-inline-box;
+        }
+
+
         .username {
             margin-left: 9px;
             font-weight: 600;
@@ -43,8 +69,8 @@
          
 
         .posts-entry .blog-entry-search-item .img-link {
-            width: 200px; /* Đặt chiều rộng là 200px */
-            height: 150px; /* Đặt chiều cao là 200px */
+            width: 300px; /* Đặt chiều rộng là 200px */
+            height: 170px; /* Đặt chiều cao là 200px */
             overflow: hidden; /* Ẩn phần của hình ảnh vượt quá kích thước đã đặt */
         }
 
@@ -185,6 +211,7 @@
             var allProducts = []; // Danh sách tất cả các bài viết
             var savedBlogIds = []; // Danh sách ID của các bài viết đã được lưu
             var userId = ''; // ID của người dùng
+            var categoriesMap = {};
 
             // Lấy token từ localStorage
             var token = localStorage.getItem('token');
@@ -218,6 +245,18 @@
                     updateUI();
                 });
             }
+            function calculateReadingTime(text) {
+                // Độ dài trung bình của một từ trong tiếng Anh
+                const wordsPerMinute = 200;
+
+                // Số từ trong văn bản
+                const wordCount = text.split(/\s+/).length;
+
+                // Số phút đọc được tính toán
+                const readingTime = Math.ceil(wordCount / wordsPerMinute);
+
+                return readingTime;
+            }
 
             // Hàm lấy danh sách các bài viết trên trang hiện tại
             function getCurrentPageItems() {
@@ -225,14 +264,41 @@
                 var endIndex = startIndex + itemsPerPage;
                 return allProducts.slice(startIndex, endIndex);
             }
+            $.ajax({
+                type: 'GET',
+                url: 'http://localhost:5233/api/Category',
+                success: function (response) {
+                    // Lưu trữ danh mục sản phẩm vào đối tượng
+                    response.forEach(function (category) {
+                        categoriesMap[category.id] = category.name;
+                    });
 
+                    // Gọi hàm để tạo giao diện người dùng sau khi lấy dữ liệu danh mục sản phẩm thành công
+                    updateUI();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching categories:', error);
+                }
+            });
+
+            // Hàm để lấy tên danh mục từ id
+            function getCategoryName(categoryId) {
+                // Kiểm tra xem danh mục có trong đối tượng categoriesMap không
+                if (categoriesMap.hasOwnProperty(categoryId)) {
+                    return categoriesMap[categoryId];
+                } else {
+                    return "Không xác định";
+                }
+            }
             // Hàm cập nhật giao diện người dùng
             function updateUI() {
                 var currentItems = getCurrentPageItems();
                 $('#productsContainer').empty(); // Xóa bài viết hiện tại để cập nhật lại
 
                 currentItems.forEach(function (product) {
+                    console.log("Product content:", product.content);
                     var productEntry = $('<div class="blog-entry d-flex blog-entry-search-item"></div>');
+
                     var imageLink = $('<a href="#" class="img-link me-4 imageLink"></a>').attr('href', '/Home/single?slug=' + product.slug);
                     var imageElement = $('<img src="" alt="Image" class="img-fluid">').attr('src', product.imageUrl);
                     imageLink.append(imageElement);
@@ -247,14 +313,31 @@
                     }
 
                     var productInfoDiv = $('<div class="product-info"></div>');
+
+                    // Thêm category sản phẩm
+                    var categoryElement = $('<span class="category"></span>').text(getCategoryName(product.categoryId));
                     var titleLink = $('<a class="titleLink" href=""></a>').attr('href', '/Home/single?slug=' + product.slug).text(product.title);
                     var titleElement = $('<h2></h2>').append(titleLink);
-                    productInfoDiv.append(saveIcon, titleElement);
+                    var readingTime = calculateReadingTime(product.content);
+
+                    // Tạo phần hiển thị số phút đọc
+                    var readingTimeElement = $('<span class="reading-time"></span>').text(readingTime + ' phút đọc');
+                    var dashElement = $('<span class="dash"> • </span>');
+
+                    // Tạo container cho categoryName và readingTime
+                    var categoryReadingTimeContainer = $('<div class="category-reading-time"></div>');
+
+                    // Thêm categoryName và readingTime vào container
+                    categoryReadingTimeContainer.append(categoryElement, dashElement, readingTimeElement);
+
+                    // Thêm container này vào productInfoDiv
+                    productInfoDiv.append(categoryReadingTimeContainer, saveIcon, titleElement);
 
                     var contentElement = $('<p class="content"></p>').html(truncateContent(product.description, 100));
                     var avatarImg = $('<img>').attr('src', product.avatarUrl).addClass('avatar-img');
                     var userNameElement = $('<span class="date userName"></span>').text(product.firstName).addClass('username');
-                    var dashElement = $('<span class="dash"> - </span>');
+                    var dashElement = $('<span class="dash"> • </span>');
+
                     var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
                     var userInfoDiv = $('<div></div>');
                     userInfoDiv.append(avatarImg, userNameElement, dashElement, createdAtElement);
@@ -263,6 +346,8 @@
                     productEntry.append(imageLink, productInfoDiv);
                     $('#productsContainer').append(productEntry);
                 });
+
+
 
                 $('#currentPage').text('Trang ' + currentPage);
 
@@ -291,9 +376,15 @@
                 event.preventDefault();
 
                 var saveIcon = $(this); // Lưu lại đối tượng nút "Lưu bài viết"
-
                 var blogId = saveIcon.attr('data-blog-id');
                 var isSaved = saveIcon.hasClass('saved');
+
+                // Thực hiện thay đổi biểu tượng ngay lập tức
+                if (isSaved) {
+                    saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
+                } else {
+                    saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
+                }
 
                 // Gửi yêu cầu API để lưu hoặc bỏ lưu bài viết
                 $.ajax({
@@ -302,22 +393,16 @@
                     data: JSON.stringify({ blogId: blogId }),
                     contentType: 'application/json',
                     success: function (response) {
-                        if (!isSaved) {
-                            // Nếu chưa lưu, đổi icon sang đã lưu
-                            saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
-                            // Thêm ID bài viết vào danh sách đã lưu
-                            savedBlogIds.push(blogId);
-                        } else {
-                            // Nếu đã lưu, đổi icon sang chưa lưu
-                            saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
-                            // Xóa ID bài viết khỏi danh sách đã lưu
-                            savedBlogIds = savedBlogIds.filter(id => id !== blogId);
-                        }
-                        // Cập nhật lại trạng thái của biểu tượng lưu bài viết
-                        $('.save-icon[data-blog-id="' + blogId + '"]').toggleClass('fa fa-bookmark far fa-bookmark saved');
+                        // Không cần làm gì nếu yêu cầu thành công
                     },
                     error: function (xhr, status, error) {
                         console.error('Error saving/unsaving blog:', error);
+                        // Nếu có lỗi, hoặc không có phản hồi, quay trở lại trạng thái trước đó của biểu tượng
+                        if (isSaved) {
+                            saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
+                        } else {
+                            saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
+                        }
                     }
                 });
             });

@@ -206,9 +206,7 @@ a {
   a:hover {
     color: #1a3542; }
 
-a:not([href]):not([class]), a:not([href]):not([class]):hover {
-  color: inherit;
-  text-decoration: none; }
+
 
 pre,
 code,
@@ -9639,7 +9637,7 @@ body {
   font-weight: 400;
   font-size: 15px;
   overflow-x: hidden;
-  color: #848d92;
+ /* color: #848d92;*/
   position: relative; }
   body:before {
     content: "";

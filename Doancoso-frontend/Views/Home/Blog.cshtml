@@ -4,19 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
        
-        
-
+        .username {
+            margin-left: 9px;
+            font-weight: 600;
+            color: black;/* Đặt margin bên trái của tên người dùng */
+        }
+        .avatar-img {
+            width: 2.5rem; /* Kích thước của khung hình */
+            height: 2.5rem;
+            border-radius: 50%; /* Tạo khung hình tròn */
+            object-fit: cover; /* Hình ảnh vừa với kích thước của khung hình */
+        }
         .titleLink {
            
             margin-top: 10px;
             max-width: 500px;
             overflow: hidden;       
             margin-bottom: 5px; /* Khoảng cách dưới của title */
-            font-weight: bold; /* In đậm title */
+            font-weight: 600; /* In đậm title */
             font-size: 20px; /* Kích thước font nhỏ hơn */
             display: -webkit-box;
             -webkit-line-clamp: 2; /* Số dòng tối đa */
@@ -26,6 +35,9 @@
             color: #000000;
         }
 
+        .posts-entry .blog-entry h2 a, .posts-entry .blog-entry .h2 a {
+            color: black;
+        }
 
             /* Định dạng text trong title */
          
@@ -169,64 +181,91 @@
     <script>
         $(document).ready(function () {
             var currentPage = 1; // Trang hiện tại
+            var itemsPerPage = 7; // Số sản phẩm trên mỗi trang
+            var allProducts = []; // Danh sách tất cả các bài viết
+            var savedBlogIds = []; // Danh sách ID của các bài viết đã được lưu
+            var userId = ''; // ID của người dùng
 
-            // Số sản phẩm trên mỗi trang
-            var itemsPerPage = 7;
+            // Lấy token từ localStorage
+            var token = localStorage.getItem('token');
 
-            // Lấy tất cả sản phẩm
-            var allProducts = [];
+            // Kiểm tra nếu token tồn tại
+            if (token) {
+                // Giải mã token để lấy thông tin
+                var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                // Lấy user ID từ thông tin giải mã
+                userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
 
-            // Khai báo hàm lấy sản phẩm trên trang hiện tại
+                // Thiết lập các tiêu đề yêu cầu cho các yêu cầu AJAX với token
+                $.ajaxSetup({
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    }
+                });
+
+                // Gọi API để lấy danh sách các bài viết
+                $.get('http://localhost:5233/api/Products', function (data) {
+                    allProducts = data.sort(function (a, b) {
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    });
+                    // Cập nhật UI sau khi nhận được dữ liệu
+                    updateUI();
+                });
+                $.get('http://localhost:5233/api/Products/saved', function (savedBlogs) {
+                    // Cập nhật danh sách ID của các bài viết đã được lưu
+                    savedBlogIds = savedBlogs.map(blog => blog.blogId);
+                    // Cập nhật UI sau khi nhận được dữ liệu
+                    updateUI();
+                });
+            }
+
+            // Hàm lấy danh sách các bài viết trên trang hiện tại
             function getCurrentPageItems() {
                 var startIndex = (currentPage - 1) * itemsPerPage;
                 var endIndex = startIndex + itemsPerPage;
                 return allProducts.slice(startIndex, endIndex);
             }
-            $('#firstPage').click(function () {
-                currentPage = 1;
-                updateUI();
-            });
 
-            // Xử lý khi click vào nút Next double (>>)
-            $('#lastPage').click(function () {
-                currentPage = Math.ceil(allProducts.length / itemsPerPage);
-                updateUI();
-            });
-            // Khai báo hàm cập nhật giao diện khi chuyển trang
+            // Hàm cập nhật giao diện người dùng
             function updateUI() {
                 var currentItems = getCurrentPageItems();
+                $('#productsContainer').empty(); // Xóa bài viết hiện tại để cập nhật lại
 
-                // Xóa tất cả sản phẩm trước đó
-                $('#productsContainer').empty();
-
-                // Hiển thị sản phẩm trên trang hiện tại
                 currentItems.forEach(function (product) {
-                    // Tạo các phần tử sản phẩm
                     var productEntry = $('<div class="blog-entry d-flex blog-entry-search-item"></div>');
-                    var imageLink = $('<a href="single.html" class="img-link me-4"></a>');
+                    var imageLink = $('<a href="#" class="img-link me-4 imageLink"></a>').attr('href', '/Home/single?slug=' + product.slug);
                     var imageElement = $('<img src="" alt="Image" class="img-fluid">').attr('src', product.imageUrl);
                     imageLink.append(imageElement);
-                    var productInfoDiv = $('<div></div>');
-                    var userNameElement = $('<span class="date userName"></span>').text(product.userName);
-                    var dashElement = $('<span class="dash"> - </span>');
-                    var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
+
+                    var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', product.blogId);
+
+                    // Kiểm tra xem người dùng đã lưu bài viết này chưa
+                    if (savedBlogIds.includes(product.blogId)) {
+                        saveIcon.addClass('fa fa-bookmark saved'); // Đánh dấu rằng bài viết đã được lưu
+                    } else {
+                        saveIcon.addClass('far fa-bookmark'); // Đánh dấu rằng bài viết chưa được lưu
+                    }
+
+                    var productInfoDiv = $('<div class="product-info"></div>');
                     var titleLink = $('<a class="titleLink" href=""></a>').attr('href', '/Home/single?slug=' + product.slug).text(product.title);
                     var titleElement = $('<h2></h2>').append(titleLink);
-                    var contentElement = $('<p class="content"></p>').html(truncateContent(product.content, 100)); // Giới hạn nội dung tại đây (100 ký tự)
-                    var readMoreLink = $('<p><a href="#" class="btn btn-sm btn-outline-primary readMoreLink">Read More</a></p>');
-                    readMoreLink.find('a').attr('href', 'http://localhost:5236/Home/single?slug=' + product.slug);
+                    productInfoDiv.append(saveIcon, titleElement);
+
+                    var contentElement = $('<p class="content"></p>').html(truncateContent(product.description, 100));
+                    var avatarImg = $('<img>').attr('src', product.avatarUrl).addClass('avatar-img');
+                    var userNameElement = $('<span class="date userName"></span>').text(product.firstName).addClass('username');
+                    var dashElement = $('<span class="dash"> - </span>');
+                    var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
                     var userInfoDiv = $('<div></div>');
-                    userInfoDiv.append(userNameElement, dashElement, createdAtElement);
-                    productInfoDiv.append(userInfoDiv, titleElement, contentElement, readMoreLink); // Thêm userInfoDiv vào productInfoDiv
+                    userInfoDiv.append(avatarImg, userNameElement, dashElement, createdAtElement);
+                    productInfoDiv.append(contentElement, userInfoDiv);
+
                     productEntry.append(imageLink, productInfoDiv);
                     $('#productsContainer').append(productEntry);
                 });
 
-
-                // Cập nhật trang hiện tại
                 $('#currentPage').text('Trang ' + currentPage);
 
-                // Ẩn hoặc hiển thị nút Previous và Next tùy thuộc vào trang hiện tại
                 $('#prevPage').prop('disabled', currentPage === 1);
                 $('#nextPage').prop('disabled', currentPage === Math.ceil(allProducts.length / itemsPerPage));
             }
@@ -247,58 +286,77 @@
                 }
             });
 
-            // Lấy tất cả sản phẩm từ API
-            $.get('http://localhost:5233/api/Products', function (data) {
-                allProducts = data.sort(function (a, b) {
-                    return new Date(b.createdAt) - new Date(a.createdAt);
+            // Xử lý sự kiện khi click vào nút "Lưu bài viết" hoặc "Bỏ lưu bài viết"
+            $(document).on('click', '.save-icon', function (event) {
+                event.preventDefault();
+
+                var saveIcon = $(this); // Lưu lại đối tượng nút "Lưu bài viết"
+
+                var blogId = saveIcon.attr('data-blog-id');
+                var isSaved = saveIcon.hasClass('saved');
+
+                // Gửi yêu cầu API để lưu hoặc bỏ lưu bài viết
+                $.ajax({
+                    type: 'POST',
+                    url: 'http://localhost:5233/api/Products/saved',
+                    data: JSON.stringify({ blogId: blogId }),
+                    contentType: 'application/json',
+                    success: function (response) {
+                        if (!isSaved) {
+                            // Nếu chưa lưu, đổi icon sang đã lưu
+                            saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
+                            // Thêm ID bài viết vào danh sách đã lưu
+                            savedBlogIds.push(blogId);
+                        } else {
+                            // Nếu đã lưu, đổi icon sang chưa lưu
+                            saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
+                            // Xóa ID bài viết khỏi danh sách đã lưu
+                            savedBlogIds = savedBlogIds.filter(id => id !== blogId);
+                        }
+                        // Cập nhật lại trạng thái của biểu tượng lưu bài viết
+                        $('.save-icon[data-blog-id="' + blogId + '"]').toggleClass('fa fa-bookmark far fa-bookmark saved');
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error saving/unsaving blog:', error);
+                    }
                 });
-                updateUI();
             });
-        });
 
-        // Hàm để định dạng createdAt
-        // Hàm để định dạng createdAt
-        function formatCreatedAt(createdAt) {
-            var currentDate = new Date();
-            var createdDate = new Date(createdAt);
+            // Hàm định dạng thời gian tạo
+            function formatCreatedAt(createdAt) {
+                var currentDate = new Date();
+                var createdDate = new Date(createdAt);
 
-            var timeDifference = Math.abs(currentDate - createdDate);
-            var minutesDifference = Math.round(timeDifference / (1000 * 60)); // Chuyển đổi sang phút
+                var timeDifference = Math.abs(currentDate - createdDate);
+                var minutesDifference = Math.round(timeDifference / (1000 * 60));
 
-            if (minutesDifference < 60) {
-                return minutesDifference + ' phút trước';
-            } else if (minutesDifference < 24 * 60) {
-                var hoursDifference = Math.floor(minutesDifference / 60);
-                return hoursDifference + ' giờ trước';
-            } else {
-                var daysDifference = Math.floor(minutesDifference / (24 * 60));
-                return daysDifference + ' ngày trước';
-            }
-        }
-
-
-        // Hàm cắt nội dung với độ dài tối đa
-        function truncateContent(content, maxLength) {
-            // Kiểm tra độ dài của nội dung
-            if (content.length > maxLength) {
-                // Tìm vị trí của ký tự cắt gần nhất, trước khi đến maxLength
-                var lastSpaceIndex = content.lastIndexOf(' ', maxLength);
-                // Kiểm tra xem có ký tự cắt không
-                if (lastSpaceIndex !== -1) {
-                    // Nếu có, cắt chuỗi và thêm dấu ba chấm
-                    return content.substring(0, lastSpaceIndex) + '...';
+                if (minutesDifference < 60) {
+                    return minutesDifference + ' phút trước';
+                } else if (minutesDifference < 24 * 60) {
+                    var hoursDifference = Math.floor(minutesDifference / 60);
+                    return hoursDifference + ' giờ trước';
                 } else {
-                    // Nếu không có khoảng trắng, chỉ đơn giản cắt tại maxLength
-                    return content.substring(0, maxLength) + '...';
+                    var daysDifference = Math.floor(minutesDifference / (24 * 60));
+                    return daysDifference + ' ngày trước';
                 }
-            } else {
-                // Nếu nội dung không vượt quá maxLength, trả về nội dung ban đầu
-                return content;
             }
-        }
 
-
+            // Hàm cắt nội dung với độ dài tối đa
+            function truncateContent(content, maxLength) {
+                if (content.length > maxLength) {
+                    var lastSpaceIndex = content.lastIndexOf(' ', maxLength);
+                    if (lastSpaceIndex !== -1) {
+                        return content.substring(0, lastSpaceIndex) + '...';
+                    } else {
+                        return content.substring(0, maxLength) + '...';
+                    }
+                } else {
+                    return content;
+                }
+            }
+        });
     </script>
+
 
 </body>
 </html>

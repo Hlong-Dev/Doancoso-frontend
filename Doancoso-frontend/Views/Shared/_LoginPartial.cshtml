@@ -1,15 +1,155 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Status</title>
+    <style>
+        /* Ẩn các phần tử khi được chọn */
+        ::selection {
+            background-color: transparent;
+            color: transparent;
+        }
+
+        /* Ẩn các phần tử khi được chọn trên Internet Explorer */
+        ::-moz-selection {
+            background-color: transparent;
+            color: transparent;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 260px;
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+            z-index: 9999; /* Đặt z-index cao hơn để dropdown được hiển thị trên tất cả */
+            right: 0;
+            border-radius: 1.5%;
+        }
+
+            .dropdown-content a {
+                color: black;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+                text-align: left;
+                transition: background-color 0.3s, color 0.3s; /* Đảm bảo có cả background-color và color */
+            }
+
+
+                .dropdown-content a:hover {
+                    background-color: #214252;
+                    color: #fff;
+                }
+
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dots {
+            display: inline-block;
+            cursor: pointer;
+            text-align: center;
+            line-height: 45px; /* align the caret vertically */
+            width: 20px; /* Set a fixed width */
+        }
+
+            /* Style the dot with a caret (upward triangle) */
+            .dots::after {
+                content: '';
+                display: block;
+                margin: auto; /* Center the dot */
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-bottom: 5px solid white; /* caret color */
+                transition: transform 0.3s; /* add transition for smooth rotation */
+            }
+
+        /* Rotate the dot to show dropdown */
+        .dropdown-open .dots::after {
+            transform: rotate(180deg);
+        }
+
+        .avatar-info {
+            border-bottom: 0.02px solid black; /* Thêm đường kẻ đen ở đây */
+            padding-top: 12px; /* Thêm padding để tạo khoảng cách */
+            padding-bottom: 12px; /* Thêm padding để tạo khoảng cách */
+            padding-left: 16px; /* Thêm padding để tạo khoảng cách */
+        }
+
+        #givenname {
+            font-weight: 600;
+            color: black;
+        }
+
+        .login-button {
+            display: inline-grid;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 </head>
 <body>
     <div id="loginStatus">
+        <div id="loginAvatar" class="dropdown" style="display: none;" onmouseover="toggleDropdown()" onmouseout="toggleDropdown()">
+            <img src="#" alt="Avatar" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+            <!-- Add 3 horizontal dots -->
+            <div class="dots"></div>
+            <div class="dropdown-content">
+                <div class="avatar-info" style="display: flex; align-items: center;">
+                    <img src="#" alt="Avatar" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div style="margin-left: 10px; display: flex; flex-direction: column; align-items: flex-start;">
+                        <span id="givenname"></span>
+                        <span id="email" style="color: #777;"></span>
+                    </div>
+                </div>
+
+                <a id="writePost">
+                    <i class="	fas fa-pen-square"></i> Viết bài
+                </a>
+
+                <a id="writeMyPostLink">
+                    <i class="fab fa-blogger"></i> Bài viết của tôi
+                </a>
+
+                <a id="hih">
+                    <i class="fas fa-file"></i> Nháp của tôi
+                </a>
+
+                <a id="hihif">
+                    <i class="fas fa-bookmark"></i> Bài viết đã lưu
+                </a>
+
+                <a id="account">
+                    <i class="fas fa-user-cog"></i> Tùy chỉnh tài khoản
+                </a>
+
+                <a id="logout">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a>
+            </div>
+        </div>
+
         <span id="loginInfo"></span>
-        <button id="loginButton">Đăng nhập</button>
+        <a id="loginButton" class="login-button" href="#">
+            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+        </a>
+
+
     </div>
 
     <script>
@@ -17,7 +157,12 @@
 
         const loginStatus = document.getElementById('loginStatus');
         const loginInfo = document.getElementById('loginInfo');
+        const loginAvatar = document.getElementById('loginAvatar'); // Lấy thẻ div để hiển thị avatar và dropdown
+        const writePost = document.getElementById('writePost');
+        const writeMyPostLink = document.getElementById('writeMyPostLink');
+        const logoutButton = document.getElementById('logout');
         const loginButton = document.getElementById('loginButton');
+        const dots = document.querySelector('.dots');
 
         async function checkLoginStatus() {
             try {
@@ -27,9 +172,22 @@
                     const response = await fetchUserInfo(token);
                     if (response.ok) {
                         const userInfo = await response.json();
-                        loginInfo.textContent = ` ${userInfo.email}`;
-                        loginButton.textContent = 'Đăng xuất';
-                        loginButton.addEventListener('click', logout);
+                        // loginInfo.textContent = ` ${userInfo.givenName}`;
+                        loginAvatar.style.display = 'inline-block'; // Hiển thị avatar khi đã đăng nhập
+                        loginAvatar.querySelector('img').src = userInfo.avatarUrl; // Thiết lập src cho ảnh avatar
+
+                        // Gán dữ liệu avatar và givenname vào các phần tử mới
+                        const avatarImg = document.querySelector('.avatar-info img');
+                        const givennameSpan = document.getElementById('givenname');
+                        const emailSpan = document.getElementById('email');
+                        avatarImg.src = userInfo.avatarUrl; // Gán src cho ảnh avatar
+                        givennameSpan.textContent = userInfo.givenName; // Gán givenname
+                        emailSpan.textContent = '#' + userInfo.email;
+                        loginAvatar.addEventListener('click', toggleDropdown); // Sự kiện click cho dropdown
+                        writePost.addEventListener('click', writeNewPost);
+                        writeMyPostLink.addEventListener('click', writeMyPost); // Sửa tên đối tượng DOM ở đây
+                        logoutButton.addEventListener('click', logout);
+                        loginButton.style.display = 'none';
                     } else {
                         console.error('Error fetching user info:', response.statusText);
                     }
@@ -50,8 +208,8 @@
                     }
                 } else {
                     // Nếu không có mã token, hiển thị nút đăng nhập
-                    loginInfo.textContent = 'Chưa đăng nhập';
-                    loginButton.textContent = 'Đăng nhập';
+
+                    // loginButton.textContent = 'Đăng nhập';
                     loginButton.addEventListener('click', redirectToLogin);
                 }
             } catch (error) {
@@ -75,6 +233,42 @@
             localStorage.removeItem('token'); // Xóa mã token khỏi localStorage khi đăng xuất
             location.reload();
         }
+
+        function toggleDropdown() {
+            const dropdownContent = loginAvatar.querySelector('.dropdown-content');
+            const isOpen = dropdownContent.style.display === 'block';
+            if (!isOpen) {
+                dropdownContent.style.display = 'block';
+                loginAvatar.classList.add('dropdown-open'); // Thêm hoặc xoay dấu tam giác
+            }
+        }
+
+        // Sự kiện mouseout để đóng dropdown khi di chuột ra khỏi nó
+        loginAvatar.addEventListener('mouseout', function () {
+            const dropdownContent = loginAvatar.querySelector('.dropdown-content');
+            dropdownContent.style.display = 'none';
+            loginAvatar.classList.remove('dropdown-open'); // Xoay lại dấu tam giác
+        });
+
+
+        function writeMyPost() {
+            window.location.href = 'http://localhost:5236/Home/HangHoa';
+        }
+
+        function writeNewPost() {
+            window.location.href = 'http://localhost:5236/Home/Create';
+        }
+        // Ngăn chọn văn bản trên trang
+        document.addEventListener('selectstart', function (e) {
+            e.preventDefault();
+        });
+
+        // Ngăn chặn thực hiện hành động sao chép
+        document.addEventListener('copy', function (e) {
+            e.clipboardData.setData('text/plain', 'Sao chép đã bị vô hiệu hóa.');
+            e.preventDefault();
+        });
+
     </script>
 </body>
 </html>

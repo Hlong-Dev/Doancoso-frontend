@@ -61,88 +61,107 @@
             <th>Tiêu Đề</th>
             <th>Nội Dung</th>
             <th>Ngày Tạo</th>
-            <th>Người Dùng</th>
-          
+            <th>Người Dùng</th>         
             <th>Đường dẫn</th>
             <th>Hành Động</th>
         </tr>
     </thead>
 </table>
 </div>
-<script>
+@Html.Partial("_FooterPartial")
+    <script>
     $(document).ready(function () {
         var token = localStorage.getItem('token');
+        var headers = {};
         if (token) {
             // Nếu có mã token, thêm vào tiêu đề Authorization của mỗi yêu cầu AJAX
-            $.ajaxSetup({
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
-            });
+            headers.Authorization = 'Bearer ' + token;
         }
 
-        var url = "http://localhost:5233/api/Products";
-        $.get(url, {}, function (data) {
-            var currentUser = getUserFromToken(token);
-            var userBlogs = data.filter(blog => blog.userId === currentUser.userId); // Lọc các bài viết của người dùng hiện tại
+        var currentUser = getUserFromToken(token);
 
-            var table_direct = new DataTable('#tbl1', {
-                data: userBlogs, // Sử dụng danh sách bài viết của người dùng hiện tại
-                columns: [
-              
-                    {
-                       
-                        data: "title",
-                        render: function (data, type, row) {
-                            var maxLength = 25; // Số ký tự tối đa
-                            if (data.length > maxLength) {
-                                return data.substring(0, maxLength) + "...";
-                            } else {
-                                return data;
-                            }
-                        }
-                    },
-                    {
-                        data: "content",
-                        render: function (data, type, row) {
-                            // Giới hạn số ký tự hiển thị
-                            var limitedContent = data.substring(0, 6);
-                            // Thêm nút "Xem chi tiết" để hiển thị toàn bộ nội dung
-                            return '<div style="display: flex; align-items: center;">' +
-                                '<div style="flex: 1;">' + limitedContent + '...</div>' +
-                                '<div style="margin-left: 10px;"><button style="font-size: 16px; padding: 5px 10px;" onclick="viewFullContent(' + row.blogId + ')">Xem chi tiết</button></div>' +
-                                '</div>';
-                        }
-                    },
-                    { data: "createdAt" },
-                    {
-                        data: "userName",
-                        render: function (data, type, row) {
-                            return data;
-                        }
-                    },
-                    {data: "slug"},
+        var urlPublic = "http://localhost:5233/api/Products"; // URL lấy bài viết công khai
 
-                    {
-                        data: null,
-                        render: function (data, type, row) {
-                            return '<button href="#" onclick="editItem(\'' + row.slug + '\')">Update</button>' +
-                                '<button onclick="deleteItem(' + row.blogId + ')">Delete</button>';
-                        }
+        // Lấy bài viết công khai
+        $.ajax({
+            url: urlPublic,
+            method: 'GET',
+            headers: headers,
+            success: function (publicBlogs) {
+                // Lọc các bài viết công khai của người dùng hiện tại
+                var userPublicBlogs = publicBlogs.filter(blog => blog.userId === currentUser.userId);
+
+                // Lấy bài viết riêng tư
+                $.ajax({
+                    url: "http://localhost:5233/api/Products/private/" + currentUser.userId, // URL lấy bài viết riêng tư
+                    method: 'GET',
+                    headers: headers,
+                    success: function (privateBlogs) {
+                        var allBlogs = userPublicBlogs.concat(privateBlogs);
+
+                        populateDataTable(allBlogs);
                     }
-                ]
-            });
+                });
+            }
         });
     });
+
+
+    function populateDataTable(blogsData) {
+
+        var table_direct = new DataTable('#tbl1', {
+            data: blogsData,
+            columns: [
+                {
+                    data: "title",
+                    render: function (data, type, row) {
+                        var maxLength = 25; // Số ký tự tối đa
+                        if (data.length > maxLength) {
+                            return data.substring(0, maxLength) + "...";
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                {
+                    data: "content",
+                    render: function (data, type, row) {
+                        // Giới hạn số ký tự hiển thị
+                        var limitedContent = data.substring(0, 6);
+                        // Thêm nút "Xem chi tiết" để hiển thị toàn bộ nội dung
+                        return '<div style="display: flex; align-items: center;">' +
+                            '<div style="flex: 1;">' + limitedContent + '...</div>' +
+                            '<div style="margin-left: 10px;"><button style="font-size: 16px; padding: 5px 10px;" onclick="viewFullContent(\'' + row.slug + '\')">Xem chi tiết</button></div>' +
+                            '</div>';
+                    }
+                },
+                { data: "createdAt" },
+                {
+                    data: "userName",
+                    render: function (data, type, row) {
+                        return data;
+                    }
+                },
+                { data: "slug" },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return '<button href="#" onclick="editItem(\'' + row.slug + '\')">Update</button>' +
+                            '<button onclick="deleteItem(' + row.blogId + ')">Delete</button>';
+                    }
+                }
+            ]
+        });
+    }
 
     function editItem(slug) {
         // Redirect to the update page with the correct blog ID
         window.location.href = 'http://localhost:5236/Home/Update?slug=' + slug;
     }
 
-    function viewDetails(blogId) {
+    function viewDetails(slug) {
         // Redirect to the details page with the correct blog ID
-        window.location.href = 'http://localhost:5236/Home/Details?id=' + blogId;
+        window.location.href = 'http://localhost:5236/Home/Details?slug=' + slug;
     }
 
     function deleteItem(id) {
@@ -152,20 +171,19 @@
                 method: 'DELETE',
                 success: function () {
                     alert('Item deleted successfully.');
-                },
-                success: function () {
-                    alert('Item deleted successfully.');
                     location.reload(); // Tải lại trang để cập nhật dữ liệu mới
-                
-
+                },
+                error: function (xhr, status, error) {
+                    console.error('Lỗi khi xóa mục:', error);
+                    alert('Đã xảy ra lỗi khi xóa mục!');
                 }
             });
         }
     }
 
-    function viewFullContent(blogId) {
+    function viewFullContent(slug) {
         // Redirect to the details page with the correct blog ID to view full content
-        window.location.href = 'http://localhost:5236/Home/Details?id=' + blogId;
+        window.location.href = 'http://localhost:5236/Home/Details?slug=' + slug;
     }
 
     function getUserFromToken(token) {

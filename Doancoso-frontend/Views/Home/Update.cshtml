@@ -53,61 +53,78 @@
 <div class="containerr">
     <input type="file" id="imageInput" accept="image/*">
 
-<form id="editForm">
-    <div style="display: none;">
-        <!-- Ẩn trường BlogId -->
-        <label for="blogId">BlogId:</label>
-        <input type="text" id="blogId" name="blogId" readonly />
-    </div>
-    <div>
-        <label for="title">Title:</label>
-        <input type="text" id="title" name="title" />
-    </div>
-    <div>
-        <label for="content">Content:</label>
-        <textarea id="content" name="content"></textarea>
-    </div>
+    <form id="editForm">
+        <div style="display: none;">
+            <!-- Ẩn trường BlogId -->
+            <label for="blogId">BlogId:</label>
+            <input type="text" id="blogId" name="blogId" readonly />
+        </div>
         <div>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" />
+        </div>
+        <div>
+            <label for="title">Mô tả:</label>
+            <input type="text" id="description" name="description">
+        </div>
+        <div>
+            <label for="content">Content:</label>
+            <textarea id="content" name="content"></textarea>
+        </div>
+        <div class="hidden">
             <label for="slug">Slug</label>
             <input id="slug" name="slug">
         </div>
-    <div >
-        <!-- Ẩn trường CreatedAt -->
-        <label for="userId">CreateDate:</label>
-        <input type="text" id="createdAt" name="createdAt" readonly />
-    </div>
-    <input type="hidden" id="userId" name="userId">
-    <div class="hidden">
-        <label for="userName">Tên người dùng:</label>
-        <input type="text" id="username" name="userName" readonly> <!-- ReadOnly -->
-    </div>
         <div class="hidden">
-        <label for="imageUrl">Ảnh</label>
-        <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
-    </div>
+            <!-- Ẩn trường CreatedAt -->
+            <label for="userId">CreateDate:</label>
+            <input type="text" id="createdAt" name="createdAt" readonly />
+        </div>
+        <input type="hidden" id="userId" name="userId">
+        <div class="hidden">
+            <label for="userName">Tên người dùng:</label>
+            <input type="text" id="username" name="userName" readonly> <!-- ReadOnly -->
+        </div>
+        <div class="hidden">
+            <label for="imageUrl">Ảnh</label>
+            <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
+        </div>
+        <input type="hidden" id="avatarUrl" name="avatarUrl">
+        <input type="hidden" id="firstName" name="firstName">
         <div>
             <label for="imageUrl">Ảnh:</label>
             <div class="image-container">
                 <img id="imagePreview" src="" alt="Ảnh">
             </div>
         </div>
-    <button type="button" onclick="updateBlog()">Update</button>
-</form>
+        <div>
+            <label for="isPublic">Trạng thái:</label>
+            <select id="isPublic" name="isPublic">
+                <option value="true">Công khai</option>
+                <option value="false">Riêng tư</option>
+            </select>
+        </div>
+        <button type="button" onclick="updateBlog()">Update</button>
+    </form>
 </div>
 <script>
     var token = localStorage.getItem('token');
-        if (token) {
-            var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-            var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-            $('#userId').val(userId);
-     
-            var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
-            $('#username').val(username);
-        }
+    if (token) {
+        var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+        $('#userId').val(userId);
+
+        var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+        $('#username').val(username);
+        var firstName = decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]));
+        var avatarUrl = tokenPayload["AvatarUrl"];
+        $('#avatarUrl').val(avatarUrl);
+        $('#firstName').val(firstName);
+    }
     $('#imageInput').change(function () {
-        uploadImage(); 
+        uploadImage();
     });
-   
+
     function fetchBlogDetails() {
         var urlParams = new URLSearchParams(window.location.search);
         var slug = urlParams.get('slug');
@@ -116,12 +133,20 @@
             $('#blogId').val(data.blogId);
             $('#slug').val(data.slug);
             $('#title').val(data.title);
+            $('#description').val(data.description);
             CKEDITOR.instances.content.setData(data.content);
             $('#createdAt').val(data.createdAt);
             $('#userId').val(data.userId);
             $('#userName').val(data.userName);
+            $('#firstName').val(data.firstName);
             $('#imageUrl').val(data.imageUrl);
+            $('#avatarUrl').val(data.avatarUrl);
             $('#imagePreview').attr('src', data.imageUrl);
+            if (data.isPublic) {
+                $('#isPublic').val('true');
+            } else {
+                $('#isPublic').val('false');
+            }
 
             var token = localStorage.getItem('token');
             if (token) {
@@ -165,20 +190,29 @@
         var blogId = $('#blogId').val();
         var slug = $('#slug').val();
         var title = $('#title').val();
+        var description = $('#description').val();
         var content = CKEDITOR.instances.content.getData();
         var createdAt = $('#createdAt').val();
         var userName = $('#username').val();
+        var firstName = $('#firstName').val();
         var imageUrl = $('#imageUrl').val();
+        var avatarUrl = $('#avatarUrl').val();
+        var isPublic = $('#isPublic').val() === "true";
 
         var updatedData = {
             blogId: blogId,
             slug: slug,
             title: title,
+            description: description,
             content: content,
             createdAt: createdAt,
             userId: userId,
             userName: userName,
-            imageUrl: imageUrl
+            firstName: firstName,
+            imageUrl: imageUrl,
+            avatarUrl: avatarUrl,
+            isPublic: isPublic
+
         };
 
         $.ajax({
@@ -224,16 +258,16 @@
             }
         });
     }
-$(document).ready(function () {
-    // Fetch blog details when the page loads
-    fetchBlogDetails();
+    $(document).ready(function () {
+        // Fetch blog details when the page loads
+        fetchBlogDetails();
 
-    // Initialize CKEditor for the content textarea
-    CKEDITOR.replace('content');
+        // Initialize CKEditor for the content textarea
+        CKEDITOR.replace('content');
 
-    // Check if userId matches the current user's ID
-    
-});
+        // Check if userId matches the current user's ID
+
+    });
 
 
 </script>

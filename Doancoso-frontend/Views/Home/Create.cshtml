@@ -6,6 +6,7 @@
     <title>Add Blog</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
+
         .containerr {
             max-width: 1120px;
             margin: 0 auto;
@@ -61,14 +62,18 @@
                 <input type="text" id="title" name="title">
             </div>
             <div>
+                <label for="title">Mô tả:</label>
+                <input type="text" id="description" name="description">
+            </div>
+            <div>
                 <label for="content">Nội dung:</label>
                 <textarea id="content" name="content"></textarea>
             </div>
-            <div>
+            <div class="hidden">
                 <label for="slug">Slug</label>
                 <input type="text" id="slug" name="slug">
             </div>
-            <div class="hidden">
+            <div >
                 <label for="imageUrl">URL của hình ảnh:</label>
                 <input type="text" id="imageUrl" name="imageUrl" readonly>
             </div>
@@ -78,10 +83,18 @@
                     <img id="imagePreview" src="" alt="Ảnh">
                 </div>
             </div>
-
+            <div>
+                <label for="category">Category:</label>
+                <select id="category" name="category">
+                    <!-- Danh sách các category sẽ được thêm vào đây -->
+                </select>
+            </div>
             <input type="hidden" id="createdAt" name="createdAt">
+            <input type="hidden" id="avatarUrl" name="avatarUrl">
+            <input type="hidden" id="firstName" name="firstName">
             <input type="hidden" id="userId" name="userId">
             <input type="hidden" id="username" name="username">
+            <input type="hidden" id="isPublic" name="isPublic">
             <button type="submit">Thêm Blog</button>
         </form>
     </div>
@@ -90,11 +103,45 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         $(document).ready(function () {
-           
+            // Gọi hàm để lấy danh sách category khi trang được tải
+            getCategories();
+
+            // Hàm để gửi yêu cầu lấy danh sách category từ server
+            function getCategories() {
+                $.ajax({
+                    url: 'http://localhost:5233/api/Category',
+                    type: 'GET',
+                    success: function (data) {
+                        // Sau khi nhận được danh sách category, điền vào dropdown
+                        populateCategoriesDropdown(data);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Đã xảy ra lỗi khi lấy danh sách category:', error);
+                    }
+                });
+            }
+
+            // Hàm để điền danh sách category vào dropdown
+            // Hàm để điền danh sách category vào dropdown
+            function populateCategoriesDropdown(categories) {
+                var dropdown = $('#category');
+                // Xóa tất cả các option hiện có trong dropdown
+                dropdown.empty();
+                // Thêm một option mặc định
+                dropdown.append($('<option>').val('').text('Chọn Category'));
+                // Thêm từng category vào dropdown
+                categories.forEach(function (category) {
+                    dropdown.append($('<option>').val(category.id).text(category.name));
+                });
+            }
+
+        });
+
+        $(document).ready(function () {
             CKEDITOR.replace('content', {
                 height: '1000px'
             });
-          
+
             var currentDateTime = new Date().toISOString().slice(0, 16);
             $('#createdAt').val(currentDateTime);
 
@@ -103,29 +150,39 @@
                 var tokenPayload = JSON.parse(atob(token.split('.')[1]));
                 var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
                 var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+                var firstName = decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]));
+                var avatarUrl = tokenPayload["AvatarUrl"];
+                $('#avatarUrl').val(avatarUrl);
                 $('#userId').val(userId);
                 $('#username').val(username);
-            
+                $('#firstName').val(firstName);
             }
+
             $('#imageInput').change(function () {
                 uploadImage(); // Gọi hàm uploadImage() khi có thay đổi trong input file
             });
-          
-            $('#addBlogForm').submit(function (event) {
-                event.preventDefault(); 
 
-               
+            $('#addBlogForm').submit(function (event) {
+                event.preventDefault();
+
+                var title = $('#title').val();
+                var slug = generateSlug(title); // Tạo slug từ tiêu đề
+
                 var formData = {
-                    title: $('#title').val(),
-                    content: CKEDITOR.instances.content.getData(), 
-                    createdAt: $('#createdAt').val(),
+                    title: title,
+                    description: $('#description').val(),
+                    content: CKEDITOR.instances.content.getData(),
+                    createdAt: currentDateTime,
+                    avatarUrl: $('#avatarUrl').val(),
+                    firstName: $('#firstName').val(),
                     userId: $('#userId').val(),
                     username: $('#username').val(),
                     imageUrl: $('#imageUrl').val(),
-                    slug: $('#slug').val(),
+                    categoryId: $('#category').val(),
+                    slug: slug, // Sử dụng slug đã tạo
+                    isPublic: true,
                 };
 
-        
                 $.ajax({
                     url: 'http://localhost:5233/api/Products',
                     type: 'POST',
@@ -133,7 +190,6 @@
                     data: JSON.stringify(formData),
                     success: function (data) {
                         alert('Blog đã được thêm thành công!');
-                     
                         window.location.href = 'http://localhost:5236/Home/HangHoa';
                     },
                     error: function (xhr, status, error) {
@@ -143,6 +199,19 @@
                 });
             });
         });
+
+        // Hàm tạo slug từ tiêu đề
+        function removeDiacritics(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f?]/g, "");
+        }
+
+        function generateSlug(title) {
+            var slug = removeDiacritics(title.trim().toLowerCase()).replace(/\s+/g, '-');
+            return slug;
+        }
+
+
+
 
 
         function uploadImage() {
@@ -164,7 +233,6 @@
                 contentType: false,
                 processData: false,
                 success: function (data) {
-                
                     $('#imageUrl').val(data.url);
                     $('#imagePreview').attr('src', data.url);
                     $('#imageContainer').show();
@@ -175,6 +243,7 @@
                 }
             });
         }
+
     </script>
 </body>
 </html>

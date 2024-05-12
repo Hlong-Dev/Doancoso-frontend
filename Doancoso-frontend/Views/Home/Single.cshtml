@@ -6,28 +6,63 @@
     <title>@ViewData["Title"]</title>
  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        #title {
+            font-weight: bold;
+           
+        }
 
+        #description {
+            font-style: italic;
+            color: white;
+        }
+
+        .mt-1
+
+        .row.same-height {
+            text-align: left; /* Đặt căn lề trái cho tất cả các phần tử con */
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 1rem;
+           /*  color: black; */
+        }
+
+        h2, .h2 {
+            font-size: 2rem;
+            font-weight: bold;
+            color: black;
+        }
+
+        .mt-1 {
+            margin-top: 0.25rem !important;
+            font-weight: 600;
+            color: black;
+        }
+    </style>
 </head>
 <body>
     <div id="coverImage" class="site-cover site-cover-sm same-height overlay single-page" style="background-image: url('');">
 
         <div class="container">
-            <div class="row same-height justify-content-center">
-                <div class="col-md-6">
-                    <div class="post-entry text-center">
+            <div class="row same-height justify-content-left">
+                <div class="col-md-12">
+                    <div class="post-entry text-left">
                         <h1 id="title" class="mb-4"></h1>
 
-                        <div class="post-meta align-items-center text-center">
-                         @*    <figure class="author-figure mb-0 me-3 d-inline-block"><img src="images/person_1.jpg" alt="Image" class="img-fluid"></figure> *@
-                            @*  <span class="d-inline-block mt-1">By Carl Atkinson</span> *@
+                        <div class="post-meta align-items-center text-left">
+                         @*    <figure class="author-figure mb-0 me-3 d-inline-block"><img src="images/person_1.jpg" alt="Image" class="img-fluid"></figure>
+                            @*  <span class="d-inline-block mt-1">By Carl Atkinson</span>
                             @*  <span>&nbsp;-&nbsp; February 10, 2019</span> *@
-                            <span id="userName" class="d-inline-block mt-1"></span>
-                            <span id="createdAt"></span>
+                            <span id="description" class="d-inline-block mt-1"></span>
+                            @* <span id="userName" class="d-inline-block mt-1"></span>
+                            <span id="createdAt"></span> *@
 
 
                         </div>
                     </div>
-                </div>
+                 </div>
             </div>
         </div>
     </div>
@@ -36,7 +71,16 @@
         <div class="container">
 
             <div class="row blog-entries element-animate">
+                <div class="post-meta align-items-center text-left">
+                    <img src="" alt="Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; object-fit: cover; " id="avatarUrl">
 
+                 
+                    <span class="d-inline-block mt-1" id="userName">
+                    </span>
+                    <span class="d-inline-block mt-1" id="avatarUrl">
+                    </span>
+                    <span id="createdAt"></span>
+                </div>
                 <div class="col-md-12 col-lg-8 main-content">
 
                     <div id="content"></div>
@@ -173,9 +217,11 @@
                     <!-- END sidebar-box -->
                     <div class="sidebar-box">
                         <div class="bio text-center">
-                            <img src="images/person_2.jpg" alt="Image Placeholder" class="img-fluid mb-3">
+                      @*       <img src="images/person_2.jpg" alt="Image Placeholder" class="img-fluid mb-3"> *@
+                            <img src="" alt="Avatar" id="avatarUrll" class="img-fluid mb-3">
+
                             <div class="bio-body">
-                                <h2>Hannah Anderson</h2>
+                                <h2 id="firstName"></h2>
                                 <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Exercitationem facilis sunt repellendus excepturi beatae porro debitis voluptate nulla quo veniam fuga sit molestias minus.</p>
                                 <p><a href="#" class="btn btn-primary btn-sm rounded px-2 py-2">Read my bio</a></p>
                                 <p class="social">
@@ -321,29 +367,52 @@
             </div>
         </div>
     </section>
+    @Html.Partial("_FooterPartial")
     <script>
+        function getUserFromToken(token) {
+            // Giải mã token để lấy thông tin người dùng
+            var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+            return {
+                userId: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
+                userName: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
+                avatarUrl: tokenPayload["AvatarUrl"],
+                // Các thông tin khác của người dùng có thể lấy từ token
+            };
+        }
+
         function fetchBlogDetails() {
             // Extract the blog ID from the URL
             var urlParams = new URLSearchParams(window.location.search);
             var slug = urlParams.get('slug');
 
             $.get('http://localhost:5233/api/Products/' + slug, function (data) {
+                // Kiểm tra nếu bài viết không phải là public và người dùng hiện tại không phải là chủ sở hữu
+                var currentUser = getUserFromToken(localStorage.getItem('token'));
+                if (!data.isPublic && (!currentUser || currentUser.userId !== data.userId)) {
+                    alert('Bạn không có quyền xem nội dung này.');
+                    window.location.href = '/'; // Điều hướng người dùng về trang chủ hoặc trang khác
+                    return;
+                }
+
+                // Tiếp tục hiển thị thông tin bài viết nếu người dùng có quyền truy cập
                 $('#slug').val(data.slug);
                 $('#title').text(data.title);
                 $('#imageUrl').text(data.imageUrl);
-
+                $('#description').text(data.description);
                 // Format createdAt to display Vietnamese date and time
                 var createdAt = new Date(data.createdAt);
-                var formattedCreatedAt = " - "+"ngày " + createdAt.getDate() + " tháng " + (createdAt.getMonth() + 1) + " năm " + createdAt.getFullYear() + " lúc " + createdAt.getHours() + "h" + createdAt.getMinutes() + "p";
+                var formattedCreatedAt = " - " + createdAt.getDate() + " tháng " + (createdAt.getMonth() + 1) + " năm " + createdAt.getFullYear();
                 $('#createdAt').text(formattedCreatedAt); // Set formatted Created At text
 
-                $('#userName').text(data.userName);
-
-                // Set content using HTML to render HTML elements
+                $('#userName').text(data.firstName);
+                $('#firstName').text(data.firstName);
+              
                 $('#content').html(data.content);
+                $('#avatarUrl').attr('src', data.avatarUrl);
+                $('#avatarUrll').attr('src', data.avatarUrl);
+
                 // Trong hàm fetchBlogDetails
                 $('#coverImage').css('background-image', 'url(' + data.imageUrl + ')');
-
             });
         }
 
@@ -351,6 +420,7 @@
         $(document).ready(function () {
             fetchBlogDetails();
         });
+
     </script>
 
 </body>

@@ -31,9 +31,50 @@
 	<link rel="stylesheet" href="~/css/style.css">
 
 	<link rel="stylesheet" href="css/flatpickr.min.css">
+	<link rel="icon" type="image/png" href="~/images/screenshot 2024-05-07 102320.png">
 
+	<title>Blogy - Mạng Xã Hội Chia sẻ Quan Điểm - Kiến Thức Hàng Đầu Việt Nam</title>
+	<style>
+		/* a:not([href]):not([class]), a:not([href]):not([class]):hover {
+			color: black;
+			text-decoration: none;
+		} */
 
-	<title>Blogy &mdash; Free Bootstrap 5 Website Template by Untree.co</title>
+		.col-6 {
+			-webkit-box-flex: 0;
+			-ms-flex: 0 0 auto;
+			flex: 0 0 auto;
+			width: 51%;
+		}
+
+		.col-3 {
+			-webkit-box-flex: 0;
+			-ms-flex: 0 0 auto;
+			flex: 0 0 auto;
+			width: 25%;
+		}
+		.text-end {
+			text-align: left !important;
+			width: 121px;
+		}
+
+		.col-2 {
+			-webkit-box-flex: 0;
+			-ms-flex: 0 0 auto;
+			flex: 0 0 auto;
+			width: 15.66667%;
+		}
+
+		.search-form .form-control {
+			height: 40px;
+			background-color: #fff;
+			margin-bottom: 0;
+			border-color: rgba(255, 255, 255, 0.2) !important;
+			padding-left: 30px;
+			color: #fff;
+			width: 130px;
+		}
+	</style>
 </head>
 <body>
 
@@ -52,14 +93,11 @@
 			<div class="menu-bg-wrap">
 				<div class="site-navigation">
 					<div class="row g-0 align-items-center">
-						<div class="col-2">
+						<div class="col-3">
 							<a href="index.html" class="logo m-0 float-start">Blogy<span class="text-primary">.</span></a>
 						</div>
 						<div class="col-6 text-center">
-							<form action="#" class="search-form d-inline-block d-lg-none">
-								<input type="text" class="form-control" placeholder="Search...">
-								<span class="bi-search"></span>
-							</form>
+							
 
 							<ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
 								<li class="active"><a asp-area="" asp-controller="Home" asp-action="Index">Trang Chủ</a></li>
@@ -85,7 +123,7 @@
 									</ul>
 								</li>
 								<li>   <a asp-area="" asp-controller="Home" asp-action="Blog">Blog Nổi Bật</a></li>
-								<li>   <a asp-area="" asp-controller="Home" asp-action="HangHoa">Blog Của Tôi</a></li>
+								<li>   <a asp-area="" asp-controller="Home" asp-action="HangHoa">Blog Công Nghệ</a></li>
 								<li><a asp-area="" asp-controller="Home" asp-action="Create">Viết Bài</a></li>
 							</ul>
 						</div>
@@ -98,9 +136,12 @@
 								<span class="bi-search"></span>
 							</form>
 						</div>
-						<div class="col-2 text-end">
+						
+
+						<div class="col-1 d-none d-lg-block">
 							<partial name="_LoginPartial" />
-							</div>
+						</div>
+
 					</div>
 				</div>
 			</div>
@@ -125,6 +166,8 @@
 	<script src="~/js/navbar.js"></script>
 	<script src="~/js/counter.js"></script>
 	<script src="~/js/custom.js"></script>
+	
+
 
 
 </body>

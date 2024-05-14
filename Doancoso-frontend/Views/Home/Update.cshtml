@@ -90,12 +90,18 @@
             <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
         </div>
         <input type="hidden" id="avatarUrl" name="avatarUrl">
-        <input type="hidden" id="firstName" name="firstName">
+        <input @* type="hidden" *@ id="firstName" name="firstName">
         <div>
             <label for="imageUrl">Ảnh:</label>
             <div class="image-container">
                 <img id="imagePreview" src="" alt="Ảnh">
             </div>
+        </div>
+        <div>
+            <label for="category">Category:</label>
+            <select id="category" name="category">
+                <!-- Danh sách các category sẽ được thêm vào đây -->
+            </select>
         </div>
         <div>
             <label for="isPublic">Trạng thái:</label>
@@ -108,6 +114,40 @@
     </form>
 </div>
 <script>
+    $(document).ready(function () {
+        // Gọi hàm để lấy danh sách category khi trang được tải
+        getCategories();
+
+        // Hàm để gửi yêu cầu lấy danh sách category từ server
+        function getCategories() {
+            $.ajax({
+                url: 'http://localhost:5233/api/Category',
+                type: 'GET',
+                success: function (data) {
+                    // Sau khi nhận được danh sách category, điền vào dropdown
+                    populateCategoriesDropdown(data);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Đã xảy ra lỗi khi lấy danh sách category:', error);
+                }
+            });
+        }
+
+        // Hàm để điền danh sách category vào dropdown
+        // Hàm để điền danh sách category vào dropdown
+        function populateCategoriesDropdown(categories) {
+            var dropdown = $('#category');
+            // Xóa tất cả các option hiện có trong dropdown
+            dropdown.empty();
+            // Thêm một option mặc định
+            dropdown.append($('<option>').val('').text('Chọn Category'));
+            // Thêm từng category vào dropdown
+            categories.forEach(function (category) {
+                dropdown.append($('<option>').val(category.id).text(category.name));
+            });
+        }
+
+    });
     var token = localStorage.getItem('token');
     if (token) {
         var tokenPayload = JSON.parse(atob(token.split('.')[1]));
@@ -140,6 +180,7 @@
             $('#userName').val(data.userName);
             $('#firstName').val(data.firstName);
             $('#imageUrl').val(data.imageUrl);
+            $('#category').val(data.categoryId);
             $('#avatarUrl').val(data.avatarUrl);
             $('#imagePreview').attr('src', data.imageUrl);
             if (data.isPublic) {
@@ -197,6 +238,7 @@
         var firstName = $('#firstName').val();
         var imageUrl = $('#imageUrl').val();
         var avatarUrl = $('#avatarUrl').val();
+        var categoryId = $('#category').val();
         var isPublic = $('#isPublic').val() === "true";
 
         var updatedData = {
@@ -211,6 +253,7 @@
             firstName: firstName,
             imageUrl: imageUrl,
             avatarUrl: avatarUrl,
+            categoryId: categoryId,
             isPublic: isPublic
 
         };

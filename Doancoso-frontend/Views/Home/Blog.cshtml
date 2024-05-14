@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: #214252;
+            color: #fff;
+            border-radius: 5px;
+            display: none; /* Ẩn phần tử ban đầu */
+        }
+ 
         .product-info {
             width: -webkit-fill-available; /* Đặt kích thước cố định cho phần product-info */
             overflow: hidden; /* Ẩn nội dung vượt ra ngoài */
@@ -85,6 +96,8 @@
     </style>
 </head>
 <body>
+    <div id="notification" class="notification"></div>
+
     <div class="hero overlay inner-page bg-primary py-5">
         <div class="container">
             <div class="row align-items-center justify-content-center text-center pt-5">
@@ -94,6 +107,7 @@
             </div>
         </div>
     </div>
+ 
 
     <div class="section search-result-wrap">
         <div class="container">
@@ -111,6 +125,10 @@
                             <span class="bi-search"></span>
                             <input type="text" class="form-control" id="s" placeholder="Type a keyword and hit enter">
                         </form>
+                    </div>
+                    <div class="sidebar-box">
+                        <h3 class="heading">Danh Mục Blog</h3>
+                        <ul class="categories"></ul>
                     </div>
                     <!-- END sidebar-box -->
                     <div class="sidebar-box">
@@ -139,7 +157,7 @@
                                         </div>
                                     </a>
                                 </li>
-                                <li>
+                               @*  <li>
                                     <a href="">
                                         <img src="images/img_3_sq.jpg" alt="Image placeholder" class="me-4 rounded">
                                         <div class="text">
@@ -149,22 +167,15 @@
                                             </div>
                                         </div>
                                     </a>
-                                </li>
+                                </li> *@
                             </ul>
                         </div>
                     </div>
                     <!-- END sidebar-box -->
 
-                    <div class="sidebar-box">
-                        <h3 class="heading">Categories</h3>
-                        <ul class="categories">
-                            <li><a href="#">Food <span>(12)</span></a></li>
-                            <li><a href="#">Travel <span>(22)</span></a></li>
-                            <li><a href="#">Lifestyle <span>(37)</span></a></li>
-                            <li><a href="#">Business <span>(42)</span></a></li>
-                            <li><a href="#">Adventure <span>(14)</span></a></li>
-                        </ul>
-                    </div>
+                   
+
+                    
                     <!-- END sidebar-box -->
 
                     <div class="sidebar-box">
@@ -204,7 +215,9 @@
 
     @Html.Partial("_FooterPartial")
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
+
         $(document).ready(function () {
             var currentPage = 1; // Trang hiện tại
             var itemsPerPage = 7; // Số sản phẩm trên mỗi trang
@@ -212,7 +225,7 @@
             var savedBlogIds = []; // Danh sách ID của các bài viết đã được lưu
             var userId = ''; // ID của người dùng
             var categoriesMap = {};
-
+            var allProductsOriginal = [];
             // Lấy token từ localStorage
             var token = localStorage.getItem('token');
 
@@ -244,7 +257,16 @@
                     // Cập nhật UI sau khi nhận được dữ liệu
                     updateUI();
                 });
+                $.get('http://localhost:5233/api/Products', function (data) {
+                    allProductsOriginal = data.sort(function (a, b) {
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    });
+                    allProducts = [...allProductsOriginal]; // Tạo bản sao của danh sách ban đầu
+                    // Cập nhật UI sau khi nhận được dữ liệu
+                    updateUI();
+                });
             }
+
             function calculateReadingTime(text) {
                 // Độ dài trung bình của một từ trong tiếng Anh
                 const wordsPerMinute = 200;
@@ -264,6 +286,7 @@
                 var endIndex = startIndex + itemsPerPage;
                 return allProducts.slice(startIndex, endIndex);
             }
+
             $.ajax({
                 type: 'GET',
                 url: 'http://localhost:5233/api/Category',
@@ -290,10 +313,47 @@
                     return "Không xác định";
                 }
             }
+
             // Hàm cập nhật giao diện người dùng
             function updateUI() {
+                $('.categories').empty();
+
+                // Tạo một đối tượng để lưu số lượng blog trong mỗi category
+                var blogCountByCategory = {};
+
+                // Duyệt qua danh sách bài viết để tính số lượng blog trong mỗi category
+                allProducts.forEach(function (product) {
+                    if (!blogCountByCategory.hasOwnProperty(product.categoryId)) {
+                        blogCountByCategory[product.categoryId] = 0;
+                    }
+                    blogCountByCategory[product.categoryId]++;
+                });
+
+                // Duyệt qua danh sách các danh mục và thêm chúng vào sidebar
+                $('.categories').empty();
+
+                for (var categoryId in categoriesMap) {
+                    if (categoriesMap.hasOwnProperty(categoryId)) {
+                        var categoryName = categoriesMap[categoryId];
+                        var listItem = $('<li></li>');
+                        var link = $('<a href="#" data-category-id="' + categoryId + '"></a>').text(categoryName);
+
+                        // Kiểm tra nếu tồn tại số lượng blog trong category này, thêm vào link
+                        if (blogCountByCategory.hasOwnProperty(categoryId)) {
+                            var blogCount = blogCountByCategory[categoryId];
+                            var blogCountSpan = $('<span></span>').text('(' + blogCount + ')');
+                            link.append(blogCountSpan);
+                        }
+
+                        listItem.append(link);
+                        $('.categories').append(listItem);
+                    }
+                }
+
+
                 var currentItems = getCurrentPageItems();
                 $('#productsContainer').empty(); // Xóa bài viết hiện tại để cập nhật lại
+                // Xóa bài viết hiện tại để cập nhật lại
 
                 currentItems.forEach(function (product) {
                     console.log("Product content:", product.content);
@@ -347,13 +407,31 @@
                     $('#productsContainer').append(productEntry);
                 });
 
-
-
                 $('#currentPage').text('Trang ' + currentPage);
 
                 $('#prevPage').prop('disabled', currentPage === 1);
                 $('#nextPage').prop('disabled', currentPage === Math.ceil(allProducts.length / itemsPerPage));
             }
+            $('.categories').on('click', 'a', function (event) {
+                event.preventDefault();
+                var categoryId = $(this).attr('data-category-id');
+                // Lọc danh sách các bài viết dựa trên danh mục được chọn
+                allProducts = allProductsOriginal.filter(function (product) {
+                    return product.categoryId == categoryId;
+                });
+
+                // Cập nhật lại số lượng blog cho mỗi danh mục sau khi lọc
+                var blogCountByCategory = {};
+                allProductsOriginal.forEach(function (product) {
+                    if (!blogCountByCategory.hasOwnProperty(product.categoryId)) {
+                        blogCountByCategory[product.categoryId] = 0;
+                    }
+                    blogCountByCategory[product.categoryId]++;
+                });
+
+                // Cập nhật lại UI
+                updateUI();
+            });
 
             // Xử lý khi click vào nút Previous
             $('#prevPage').click(function () {
@@ -382,8 +460,10 @@
                 // Thực hiện thay đổi biểu tượng ngay lập tức
                 if (isSaved) {
                     saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
+                    showNotification('thành công!', 'success', 'unsave'); // Hiển thị thông báo khi bỏ lưu
                 } else {
                     saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
+                    showNotification('thành công!', 'success', 'save'); // Hiển thị thông báo khi lưu
                 }
 
                 // Gửi yêu cầu API để lưu hoặc bỏ lưu bài viết
@@ -393,10 +473,12 @@
                     data: JSON.stringify({ blogId: blogId }),
                     contentType: 'application/json',
                     success: function (response) {
-                        // Không cần làm gì nếu yêu cầu thành công
+                        // Không cần xử lý phản hồi ở đây nữa vì đã xử lý trong hàm showNotification
                     },
                     error: function (xhr, status, error) {
                         console.error('Error saving/unsaving blog:', error);
+                        // Hiển thị thông báo lỗi
+                        showNotification('Đã xảy ra lỗi!', 'error');
                         // Nếu có lỗi, hoặc không có phản hồi, quay trở lại trạng thái trước đó của biểu tượng
                         if (isSaved) {
                             saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
@@ -406,7 +488,16 @@
                     }
                 });
             });
-
+            function getBlogCountByCategoryId(categoryId) {
+                // Đếm số lượng blog có trong danh mục categoryId trong allProducts
+                var blogCount = 0;
+                allProducts.forEach(function (product) {
+                    if (product.categoryId === categoryId) {
+                        blogCount++;
+                    }
+                });
+                return blogCount;
+            }
             // Hàm định dạng thời gian tạo
             function formatCreatedAt(createdAt) {
                 var currentDate = new Date();
@@ -439,8 +530,37 @@
                     return content;
                 }
             }
+
+
+            function showNotification(message, type, action) {
+                var actionText = '';
+                if (action === 'save') {
+                    actionText = 'Lưu bài viết';
+                } else if (action === 'unsave') {
+                    actionText = 'Bỏ lưu bài viết';
+                }
+
+                var notification = $('<div class="notification"></div>');
+                notification.text(actionText + ' ' + message);
+                notification.addClass(type);
+                if ($('.notification').length >= 1) {
+                    $('.notification:first').remove();
+                }
+
+
+                $('body').append(notification);
+
+
+                notification.fadeIn().delay(3000).fadeOut(function () {
+                    $(this).remove();
+                });
+            }
+
+
         });
     </script>
+
+
 
 
 </body>

@@ -64,7 +64,12 @@
                         }
                     },
                     { data: "createdAt" },
-                    { data: "userId" },
+                    {
+                        data: "userName",
+                        render: function (data, type, row) {
+                            return data;
+                        }
+                    },
                     {
                         data: null,
                         render: function (data, type, row) {

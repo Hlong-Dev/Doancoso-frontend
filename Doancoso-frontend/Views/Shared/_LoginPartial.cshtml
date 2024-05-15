@@ -182,7 +182,7 @@
                         const emailSpan = document.getElementById('email');
                         avatarImg.src = userInfo.avatarUrl; // Gán src cho ảnh avatar
                         givennameSpan.textContent = userInfo.givenName; // Gán givenname
-                        emailSpan.textContent = '#' + userInfo.email;
+                        emailSpan.textContent = userInfo.email;
                         loginAvatar.addEventListener('click', toggleDropdown); // Sự kiện click cho dropdown
                         writePost.addEventListener('click', writeNewPost);
                         writeMyPostLink.addEventListener('click', writeMyPost); // Sửa tên đối tượng DOM ở đây

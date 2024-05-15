@@ -89,7 +89,7 @@
             <label for="imageUrl">Ảnh</label>
             <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
         </div>
-        <input type="hidden" id="avatarUrl" name="avatarUrl">
+        <input @* type="hidden" *@ id="avatarUrl" name="avatarUrl">
         <input @* type="hidden" *@ id="firstName" name="firstName">
         <div>
             <label for="imageUrl">Ảnh:</label>
@@ -133,8 +133,7 @@
             });
         }
 
-        // Hàm để điền danh sách category vào dropdown
-        // Hàm để điền danh sách category vào dropdown
+       
         function populateCategoriesDropdown(categories) {
             var dropdown = $('#category');
             // Xóa tất cả các option hiện có trong dropdown
@@ -149,21 +148,25 @@
 
     });
     var token = localStorage.getItem('token');
+    var userId, username, firstName, avatarUrl;
     if (token) {
         var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+        userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
         $('#userId').val(userId);
 
-        var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+        username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
         $('#username').val(username);
-        var firstName = decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]));
-        var avatarUrl = tokenPayload["AvatarUrl"];
-        $('#avatarUrl').val(avatarUrl);
+        firstName = decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]));
         $('#firstName').val(firstName);
+        avatarUrl = tokenPayload["AvatarUrl"];
+        $('#avatarUrl').val(avatarUrl);
     }
-    $('#imageInput').change(function () {
-        uploadImage();
-    });
+
+    // Lấy thông tin blog khi trang được tải
+    fetchBlogDetails();
+
+    // Initialize CKEditor for the content textarea
+    CKEDITOR.replace('content');
 
     function fetchBlogDetails() {
         var urlParams = new URLSearchParams(window.location.search);
@@ -176,18 +179,16 @@
             $('#description').val(data.description);
             CKEDITOR.instances.content.setData(data.content);
             $('#createdAt').val(data.createdAt);
-            $('#userId').val(data.userId);
-            $('#userName').val(data.userName);
-            $('#firstName').val(data.firstName);
             $('#imageUrl').val(data.imageUrl);
             $('#category').val(data.categoryId);
-            $('#avatarUrl').val(data.avatarUrl);
             $('#imagePreview').attr('src', data.imageUrl);
-            if (data.isPublic) {
-                $('#isPublic').val('true');
-            } else {
-                $('#isPublic').val('false');
-            }
+            $('#isPublic').val(data.isPublic ? 'true' : 'false');
+
+            // Thay thế các trường lấy từ database bằng các trường phân giải từ token
+            $('#userId').val(userId);
+            $('#username').val(username);
+            $('#firstName').val(firstName);
+            $('#avatarUrl').val(avatarUrl);
 
             var token = localStorage.getItem('token');
             if (token) {

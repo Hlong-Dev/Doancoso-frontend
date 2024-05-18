@@ -85,7 +85,7 @@
             <label for="userName">Tên người dùng:</label>
             <input type="text" id="username" name="userName" readonly> <!-- ReadOnly -->
         </div>
-        <div class="hidden">
+        <div @* class="hidden" *@>
             <label for="imageUrl">Ảnh</label>
             <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
         </div>
@@ -161,6 +161,9 @@
         avatarUrl = tokenPayload["AvatarUrl"];
         $('#avatarUrl').val(avatarUrl);
     }
+    $('#imageInput').change(function () {
+        uploadImage(); // Gọi hàm uploadImage() khi có thay đổi trong input file
+    });
 
     // Lấy thông tin blog khi trang được tải
     fetchBlogDetails();
@@ -207,8 +210,7 @@
         });
     }
 
-    // Function to update blog details
-    // Function to update blog details
+   
     function updateBlog() {
         var userId = $('#userId').val(); // Lấy userId từ form
         var token = localStorage.getItem('token'); // Lấy token từ localStorage
@@ -286,15 +288,15 @@
         formData.append('file', file);
 
         $.ajax({
-            url: 'http://localhost:5233/api/Products/upload', // Đường dẫn tới endpoint upload
+            url: 'http://localhost:5233/api/Products/upload',
             type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
             success: function (data) {
-                // Sau khi upload thành công, gán URL của hình ảnh vào trường imageUrl
                 $('#imageUrl').val(data.url);
                 $('#imagePreview').attr('src', data.url);
+                $('#imageContainer').show();
             },
             error: function (xhr, status, error) {
                 console.error('Lỗi khi tải lên hình ảnh:', error);

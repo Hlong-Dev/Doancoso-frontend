@@ -119,37 +119,33 @@
                     </span>
                     <span id="createdAt"></span>
                 </div>
-                <div class="col-md-12 col-lg-12 main-content">
+                <div class="col-md-12 col-lg-8 main-content">
 
                     <div id="content"></div>
 
                     <span id="blogId" class="hidden"></span>
                     <span id="slug" class="hidden"></span>
-                   
+
 
 
                     <div class="pt-5 comment-wrap">
-                        <h3 class="mb-5 heading">6 Bình luận</h3>
+                        <h3 class="mb-5 heading">Bình luận (<span id="commentCount">0</span>)</h3>
+                        <p id="noCommentsMessage" style="display: none;">Bài viết chưa có bình luận nào, hãy là người đầu tiên bình luận.</p>
                         <ul class="comment-list" id="commentList">
-                           
+                            <!-- Comment items will be appended here -->
                         </ul>
-
-                      
-
                         <div class="comment-form-wrap pt-5">
                             <h3 class="mb-5">Hãy chia sẻ cảm nghĩ của bạn về bài viết</h3>
                             <form id="commentForm" class="p-5 bg-light">
-                                
                                 <div class="form-group">
                                     <label for="message">Nhập cảm nghĩ của bạn</label>
-                                    <textarea name="" id="commentContent" cols="30" rows="10" class="form-control"></textarea>
+                                    <textarea id="commentContent" cols="30" rows="10" class="form-control"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <input type="submit" value="Gửi bình luận" class="btn btn-primary">
                                 </div>
                             </form>
                         </div>
-
                     </div>
 
                 </div>
@@ -299,20 +295,30 @@
                     // Xóa toàn bộ danh sách comment hiện tại
                     $('#commentList').empty();
 
-                    // Thêm từng comment vào danh sách
-                    comments.forEach(function (comment) {
-                        var commentHtml = '<li class="comment">';
-                        commentHtml += '<div class="vcard"><img src="' + comment.avatarUrl + '" alt="Image placeholder"></div>';
-                        commentHtml += '<div class="comment-body">';
-                        commentHtml += '<h3>' + comment.firstName + '</h3>';
-                        commentHtml += '<div class="meta">' + new Date(comment.createdAt).toLocaleString() + '</div>';
-                        commentHtml += '<p>' + comment.content + '</p>';
-                        commentHtml += '<p><a href="#" class="reply rounded">Reply</a></p>';
-                        commentHtml += '</div></li>';
+                    // Đếm số lượng bình luận
+                    var commentCount = comments.length;
+                    $('#commentCount').text(commentCount);
 
-                        // Thêm comment vào danh sách
-                        $('#commentList').append(commentHtml);
-                    });
+                    if (commentCount === 0) {
+                        $('#noCommentsMessage').show();
+                    } else {
+                        $('#noCommentsMessage').hide();
+
+                        // Thêm từng comment vào danh sách
+                        comments.forEach(function (comment) {
+                            var commentHtml = '<li class="comment">';
+                            commentHtml += '<div class="vcard"><img src="' + comment.avatarUrl + '" alt="Image placeholder"></div>';
+                            commentHtml += '<div class="comment-body">';
+                            commentHtml += '<h3>' + comment.firstName + '</h3>';
+                            commentHtml += '<div class="meta">' + new Date(comment.createdAt).toLocaleString() + '</div>';
+                            commentHtml += '<p>' + comment.content + '</p>';
+                            commentHtml += '<p><a href="#" class="reply rounded">Reply</a></p>';
+                            commentHtml += '</div></li>';
+
+                            // Thêm comment vào danh sách
+                            $('#commentList').append(commentHtml);
+                        });
+                    }
                 });
             }
 

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
+
         .notification {
             position: fixed;
             top: 20px;
@@ -201,13 +202,21 @@
              
 
             </div>
-            <div class="pagination">
-                <button id="firstPage"><<</button>
-                <button id="prevPage"><</button>
-                <span id="currentPage"></span>
-                <button id="nextPage">></button>
-                <button id="lastPage">>></button>
-                <div id="pageButtons"></div>
+            <div id="pagination">
+                <ul class="pagination">
+                    <li class="page-item"><a class="page-link" href="#" id="prevPage">«</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="2">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="3">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="4">4</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="5">5</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="6">6</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="7">7</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="8">8</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="9">9</a></li>
+                    <li class="page-item"><a class="page-link" href="#" data-page="10">10</a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="nextPage">»</a></li>
+                </ul>
             </div>
 
         </div>
@@ -216,112 +225,99 @@
     @Html.Partial("_FooterPartial")
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script>
 
+
+        <script>
         $(document).ready(function () {
-            var currentPage = 1; // Trang hiện tại
-            var itemsPerPage = 7; // Số sản phẩm trên mỗi trang
-            var allProducts = []; // Danh sách tất cả các bài viết
-            var savedBlogIds = []; // Danh sách ID của các bài viết đã được lưu
-            var userId = ''; // ID của người dùng
-            var categoriesMap = {};
-            var allProductsOriginal = [];
-            // Lấy token từ localStorage
-            var token = localStorage.getItem('token');
+            var currentPage = 1; // Current page number
+            var itemsPerPage = 7; // Number of items per page
+            var allProducts = []; // List of all blog posts
+            var savedBlogIds = []; // List of saved blog post IDs
+            var userId = ''; // User ID
+            var categoriesMap = {}; // Map of categories
+            var allProductsOriginal = []; // Original list of all blog posts
+            var totalPages = 1; // Total number of pages
+            var token = localStorage.getItem('token'); // Retrieve token from localStorage
 
-            // Kiểm tra nếu token tồn tại
+            // Check if the token exists
             if (token) {
-                // Giải mã token để lấy thông tin
                 var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-                // Lấy user ID từ thông tin giải mã
                 userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
 
-                // Thiết lập các tiêu đề yêu cầu cho các yêu cầu AJAX với token
                 $.ajaxSetup({
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                     }
                 });
 
-                // Gọi API để lấy danh sách các bài viết
+                // Fetch the list of blog posts
                 $.get('http://localhost:5233/api/Products', function (data) {
-                    allProducts = data.sort(function (a, b) {
-                        return new Date(b.createdAt) - new Date(a.createdAt);
-                    });
-                    // Cập nhật UI sau khi nhận được dữ liệu
+                    allProductsOriginal = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    allProducts = [...allProductsOriginal];
+                    totalPages = Math.ceil(allProducts.length / itemsPerPage);
                     updateUI();
                 });
+
+                // Fetch the list of saved blog posts
                 $.get('http://localhost:5233/api/Products/saved', function (savedBlogs) {
-                    // Cập nhật danh sách ID của các bài viết đã được lưu
                     savedBlogIds = savedBlogs.map(blog => blog.blogId);
-                    // Cập nhật UI sau khi nhận được dữ liệu
                     updateUI();
                 });
-                $.get('http://localhost:5233/api/Products', function (data) {
-                    allProductsOriginal = data.sort(function (a, b) {
-                        return new Date(b.createdAt) - new Date(a.createdAt);
+
+                // Fetch the list of categories
+                $.get('http://localhost:5233/api/Category', function (response) {
+                    response.forEach(function (category) {
+                        categoriesMap[category.id] = category.name;
                     });
-                    allProducts = [...allProductsOriginal]; // Tạo bản sao của danh sách ban đầu
-                    // Cập nhật UI sau khi nhận được dữ liệu
                     updateUI();
+                }).fail(function (xhr, status, error) {
+                    console.error('Error fetching categories:', error);
                 });
             }
 
             function calculateReadingTime(text) {
-                // Độ dài trung bình của một từ trong tiếng Anh
                 const wordsPerMinute = 200;
-
-                // Số từ trong văn bản
                 const wordCount = text.split(/\s+/).length;
-
-                // Số phút đọc được tính toán
-                const readingTime = Math.ceil(wordCount / wordsPerMinute);
-
-                return readingTime;
+                return Math.ceil(wordCount / wordsPerMinute);
             }
 
-            // Hàm lấy danh sách các bài viết trên trang hiện tại
             function getCurrentPageItems() {
                 var startIndex = (currentPage - 1) * itemsPerPage;
-                var endIndex = startIndex + itemsPerPage;
-                return allProducts.slice(startIndex, endIndex);
+                return allProducts.slice(startIndex, startIndex + itemsPerPage);
             }
 
-            $.ajax({
-                type: 'GET',
-                url: 'http://localhost:5233/api/Category',
-                success: function (response) {
-                    // Lưu trữ danh mục sản phẩm vào đối tượng
-                    response.forEach(function (category) {
-                        categoriesMap[category.id] = category.name;
-                    });
-
-                    // Gọi hàm để tạo giao diện người dùng sau khi lấy dữ liệu danh mục sản phẩm thành công
-                    updateUI();
-                },
-                error: function (xhr, status, error) {
-                    console.error('Error fetching categories:', error);
-                }
-            });
-
-            // Hàm để lấy tên danh mục từ id
             function getCategoryName(categoryId) {
-                // Kiểm tra xem danh mục có trong đối tượng categoriesMap không
-                if (categoriesMap.hasOwnProperty(categoryId)) {
-                    return categoriesMap[categoryId];
+                return categoriesMap[categoryId] || "Không xác định";
+            }
+
+            function formatCreatedAt(createdAt) {
+                var currentDate = new Date();
+                var createdDate = new Date(createdAt);
+                var timeDifference = Math.abs(currentDate - createdDate);
+                var minutesDifference = Math.round(timeDifference / (1000 * 60));
+
+                if (minutesDifference < 60) {
+                    return minutesDifference + ' phút trước';
+                } else if (minutesDifference < 24 * 60) {
+                    return Math.floor(minutesDifference / 60) + ' giờ trước';
                 } else {
-                    return "Không xác định";
+                    return Math.floor(minutesDifference / (24 * 60)) + ' ngày trước';
                 }
             }
 
-            // Hàm cập nhật giao diện người dùng
+            function truncateContent(content, maxLength) {
+                if (content.length > maxLength) {
+                    var lastSpaceIndex = content.lastIndexOf(' ', maxLength);
+                    return lastSpaceIndex !== -1 ? content.substring(0, lastSpaceIndex) + '...' : content.substring(0, maxLength) + '...';
+                }
+                return content;
+            }
+
             function updateUI() {
                 $('.categories').empty();
 
-                // Tạo một đối tượng để lưu số lượng blog trong mỗi category
                 var blogCountByCategory = {};
 
-                // Duyệt qua danh sách bài viết để tính số lượng blog trong mỗi category
                 allProducts.forEach(function (product) {
                     if (!blogCountByCategory.hasOwnProperty(product.categoryId)) {
                         blogCountByCategory[product.categoryId] = 0;
@@ -329,16 +325,12 @@
                     blogCountByCategory[product.categoryId]++;
                 });
 
-                // Duyệt qua danh sách các danh mục và thêm chúng vào sidebar
-                $('.categories').empty();
-
                 for (var categoryId in categoriesMap) {
                     if (categoriesMap.hasOwnProperty(categoryId)) {
                         var categoryName = categoriesMap[categoryId];
                         var listItem = $('<li></li>');
                         var link = $('<a href="#" data-category-id="' + categoryId + '"></a>').text(categoryName);
 
-                        // Kiểm tra nếu tồn tại số lượng blog trong category này, thêm vào link
                         if (blogCountByCategory.hasOwnProperty(categoryId)) {
                             var blogCount = blogCountByCategory[categoryId];
                             var blogCountSpan = $('<span></span>').text('(' + blogCount + ')');
@@ -350,13 +342,10 @@
                     }
                 }
 
-
                 var currentItems = getCurrentPageItems();
-                $('#productsContainer').empty(); // Xóa bài viết hiện tại để cập nhật lại
-                // Xóa bài viết hiện tại để cập nhật lại
+                $('#productsContainer').empty();
 
                 currentItems.forEach(function (product) {
-                    console.log("Product content:", product.content);
                     var productEntry = $('<div class="blog-entry d-flex blog-entry-search-item"></div>');
 
                     var imageLink = $('<a href="#" class="img-link me-4 imageLink"></a>').attr('href', '/Home/single?slug=' + product.slug);
@@ -364,122 +353,148 @@
                     imageLink.append(imageElement);
 
                     var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', product.blogId);
-
-                    // Kiểm tra xem người dùng đã lưu bài viết này chưa
-                    if (savedBlogIds.includes(product.blogId)) {
-                        saveIcon.addClass('fa fa-bookmark saved'); // Đánh dấu rằng bài viết đã được lưu
-                    } else {
-                        saveIcon.addClass('far fa-bookmark'); // Đánh dấu rằng bài viết chưa được lưu
-                    }
+                    saveIcon.addClass(savedBlogIds.includes(product.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
 
                     var productInfoDiv = $('<div class="product-info"></div>');
 
-                    // Thêm category sản phẩm
                     var categoryElement = $('<span class="category"></span>').text(getCategoryName(product.categoryId));
                     var titleLink = $('<a class="titleLink" href=""></a>').attr('href', '/Home/single?slug=' + product.slug).text(product.title);
                     var titleElement = $('<h2></h2>').append(titleLink);
                     var readingTime = calculateReadingTime(product.content);
-
-                    // Tạo phần hiển thị số phút đọc
                     var readingTimeElement = $('<span class="reading-time"></span>').text(readingTime + ' phút đọc');
                     var dashElement = $('<span class="dash"> • </span>');
 
-                    // Tạo container cho categoryName và readingTime
                     var categoryReadingTimeContainer = $('<div class="category-reading-time"></div>');
+                    categoryReadingTimeContainer.append(categoryElement, dashElement.clone(), readingTimeElement);
 
-                    // Thêm categoryName và readingTime vào container
-                    categoryReadingTimeContainer.append(categoryElement, dashElement, readingTimeElement);
-
-                    // Thêm container này vào productInfoDiv
                     productInfoDiv.append(categoryReadingTimeContainer, saveIcon, titleElement);
 
                     var contentElement = $('<p class="content"></p>').html(truncateContent(product.description, 100));
                     var avatarImg = $('<img>').attr('src', product.avatarUrl).addClass('avatar-img');
                     var userNameElement = $('<span class="date userName"></span>').text(product.firstName).addClass('username');
-                    var dashElement = $('<span class="dash"> • </span>');
-
                     var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
-                    var userInfoDiv = $('<div></div>');
-                    userInfoDiv.append(avatarImg, userNameElement, dashElement, createdAtElement);
+                    var userInfoDiv = $('<div class="user-info"></div>');
+
+                    userInfoDiv.append(avatarImg, userNameElement, dashElement.clone(), createdAtElement);
                     productInfoDiv.append(contentElement, userInfoDiv);
 
                     productEntry.append(imageLink, productInfoDiv);
                     $('#productsContainer').append(productEntry);
                 });
 
-                $('#currentPage').text('Trang ' + currentPage);
+                updatePagination();
 
-                $('#prevPage').prop('disabled', currentPage === 1);
-                $('#nextPage').prop('disabled', currentPage === Math.ceil(allProducts.length / itemsPerPage));
+                // Add click event handler for category links
+                $('.categories a').on('click', function (e) {
+                    e.preventDefault();
+                    var categoryId = $(this).data('category-id');
+                    filterByCategory(categoryId);
+                });
             }
-            $('.categories').on('click', 'a', function (event) {
-                event.preventDefault();
-                var categoryId = $(this).attr('data-category-id');
-                // Lọc danh sách các bài viết dựa trên danh mục được chọn
-                allProducts = allProductsOriginal.filter(function (product) {
-                    return product.categoryId == categoryId;
-                });
 
-                // Cập nhật lại số lượng blog cho mỗi danh mục sau khi lọc
-                var blogCountByCategory = {};
-                allProductsOriginal.forEach(function (product) {
-                    if (!blogCountByCategory.hasOwnProperty(product.categoryId)) {
-                        blogCountByCategory[product.categoryId] = 0;
+            function filterByCategory(categoryId) {
+                currentPage = 1;
+                if (categoryId) {
+                    allProducts = allProductsOriginal.filter(function (product) {
+                        return product.categoryId === categoryId;
+                    });
+                } else {
+                    allProducts = [...allProductsOriginal];
+                }
+                totalPages = Math.ceil(allProducts.length / itemsPerPage);
+                updateUI();
+            }
+
+            function updatePagination() {
+                var pagination = $('#pagination ul.pagination');
+                pagination.empty();
+
+                var prevPageItem = $('<li class="page-item"><a class="page-link" href="#" id="prevPage">«</a></li>');
+                pagination.append(prevPageItem);
+
+                for (var i = 1; i <= totalPages; i++) {
+                    var pageItem = $('<li class="page-item"></li>');
+                    var pageLink = $('<a class="page-link" href="#" data-page="' + i + '"></a>').text(i);
+                    if (i === currentPage) {
+                        pageItem.addClass('active');
                     }
-                    blogCountByCategory[product.categoryId]++;
+                    pageItem.append(pageLink);
+                    pagination.append(pageItem);
+                }
+
+                var nextPageItem = $('<li class="page-item"><a class="page-link" href="#" id="nextPage">»</a></li>');
+                pagination.append(nextPageItem);
+
+                $('#prevPage').on('click', function (e) {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        currentPage--;
+                        updateUI();
+                    }
                 });
 
-                // Cập nhật lại UI
+                $('#nextPage').on('click', function (e) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        updateUI();
+                    }
+                });
+
+                pagination.find('a.page-link[data-page]').on('click', function (e) {
+                    e.preventDefault();
+                    var selectedPage = parseInt($(this).attr('data-page'));
+                    if (selectedPage !== currentPage) {
+                        currentPage = selectedPage;
+                        updateUI();
+                    }
+                });
+            }
+
+            $('#search-form').submit(function (e) {
+                e.preventDefault();
+                var searchTerm = $('#search-input').val().toLowerCase();
+                currentPage = 1;
+
+                if (searchTerm.trim() === '') {
+                    allProducts = [...allProductsOriginal];
+                } else {
+                    allProducts = allProductsOriginal.filter(function (product) {
+                        var title = product.title.toLowerCase();
+                        var description = product.description.toLowerCase();
+                        var content = product.content.toLowerCase();
+                        return title.includes(searchTerm) || description.includes(searchTerm) || content.includes(searchTerm);
+                    });
+                }
+
+                totalPages = Math.ceil(allProducts.length / itemsPerPage);
                 updateUI();
             });
 
-            // Xử lý khi click vào nút Previous
-            $('#prevPage').click(function () {
-                if (currentPage > 1) {
-                    currentPage--;
-                    updateUI();
-                }
-            });
-
-            // Xử lý khi click vào nút Next
-            $('#nextPage').click(function () {
-                if (currentPage < Math.ceil(allProducts.length / itemsPerPage)) {
-                    currentPage++;
-                    updateUI();
-                }
-            });
-
-            // Xử lý sự kiện khi click vào nút "Lưu bài viết" hoặc "Bỏ lưu bài viết"
             $(document).on('click', '.save-icon', function (event) {
                 event.preventDefault();
 
-                var saveIcon = $(this); // Lưu lại đối tượng nút "Lưu bài viết"
+                var saveIcon = $(this);
                 var blogId = saveIcon.attr('data-blog-id');
                 var isSaved = saveIcon.hasClass('saved');
 
-                // Thực hiện thay đổi biểu tượng ngay lập tức
                 if (isSaved) {
                     saveIcon.removeClass('fa fa-bookmark saved').addClass('far fa-bookmark');
-                    showNotification('thành công!', 'success', 'unsave'); // Hiển thị thông báo khi bỏ lưu
+                    showNotification('thành công!', 'success', 'unsave');
                 } else {
                     saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
-                    showNotification('thành công!', 'success', 'save'); // Hiển thị thông báo khi lưu
+                    showNotification('thành công!', 'success', 'save');
                 }
 
-                // Gửi yêu cầu API để lưu hoặc bỏ lưu bài viết
                 $.ajax({
                     type: 'POST',
                     url: 'http://localhost:5233/api/Products/saved',
                     data: JSON.stringify({ blogId: blogId }),
                     contentType: 'application/json',
-                    success: function (response) {
-                        // Không cần xử lý phản hồi ở đây nữa vì đã xử lý trong hàm showNotification
-                    },
+                    success: function () { },
                     error: function (xhr, status, error) {
                         console.error('Error saving/unsaving blog:', error);
-                        // Hiển thị thông báo lỗi
                         showNotification('Đã xảy ra lỗi!', 'error');
-                        // Nếu có lỗi, hoặc không có phản hồi, quay trở lại trạng thái trước đó của biểu tượng
                         if (isSaved) {
                             saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
                         } else {
@@ -488,49 +503,6 @@
                     }
                 });
             });
-            function getBlogCountByCategoryId(categoryId) {
-                // Đếm số lượng blog có trong danh mục categoryId trong allProducts
-                var blogCount = 0;
-                allProducts.forEach(function (product) {
-                    if (product.categoryId === categoryId) {
-                        blogCount++;
-                    }
-                });
-                return blogCount;
-            }
-            // Hàm định dạng thời gian tạo
-            function formatCreatedAt(createdAt) {
-                var currentDate = new Date();
-                var createdDate = new Date(createdAt);
-
-                var timeDifference = Math.abs(currentDate - createdDate);
-                var minutesDifference = Math.round(timeDifference / (1000 * 60));
-
-                if (minutesDifference < 60) {
-                    return minutesDifference + ' phút trước';
-                } else if (minutesDifference < 24 * 60) {
-                    var hoursDifference = Math.floor(minutesDifference / 60);
-                    return hoursDifference + ' giờ trước';
-                } else {
-                    var daysDifference = Math.floor(minutesDifference / (24 * 60));
-                    return daysDifference + ' ngày trước';
-                }
-            }
-
-            // Hàm cắt nội dung với độ dài tối đa
-            function truncateContent(content, maxLength) {
-                if (content.length > maxLength) {
-                    var lastSpaceIndex = content.lastIndexOf(' ', maxLength);
-                    if (lastSpaceIndex !== -1) {
-                        return content.substring(0, lastSpaceIndex) + '...';
-                    } else {
-                        return content.substring(0, maxLength) + '...';
-                    }
-                } else {
-                    return content;
-                }
-            }
-
 
             function showNotification(message, type, action) {
                 var actionText = '';
@@ -547,17 +519,14 @@
                     $('.notification:first').remove();
                 }
 
-
                 $('body').append(notification);
-
 
                 notification.fadeIn().delay(3000).fadeOut(function () {
                     $(this).remove();
                 });
             }
-
-
         });
+
     </script>
 
 

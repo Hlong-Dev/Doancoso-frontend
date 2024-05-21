@@ -10,10 +10,10 @@
 
         .notification {
             position: fixed;
-            top: 20px;
+            top: 80px;
             right: 20px;
             padding: 10px;
-            background-color: #214252;
+            background-color: #0C2F40;
             color: #fff;
             border-radius: 5px;
             display: none; /* Ẩn phần tử ban đầu */
@@ -41,11 +41,15 @@
             color: #b3b3b3;
         }
         .category-reading-time {
-            width: 494px;
+            width: 474px;
             display: -webkit-inline-box;
         }
 
-
+        .fa-ellipsis-v:before {
+            content: "\f142";
+         
+            margin-left: 10px;
+        }
         .username {
             margin-left: 9px;
             font-weight: 600;
@@ -81,19 +85,36 @@
          
 
         .posts-entry .blog-entry-search-item .img-link {
-            width: 300px; /* Đặt chiều rộng là 200px */
-            height: 170px; /* Đặt chiều cao là 200px */
-            overflow: hidden; /* Ẩn phần của hình ảnh vượt quá kích thước đã đặt */
+            width: 300px;
+            height: 170px; 
+            overflow: hidden; 
         }
 
             .posts-entry .blog-entry-search-item .img-link img {
-                width: 100%; /* Hình ảnh sẽ tự động co dãn để vừa với kích thước đã đặt */
-                height: 100%; /* Đảm bảo tỷ lệ hình ảnh không bị biến dạng */
-                object-fit: cover; /* Hình ảnh sẽ bị kéo ra để vừa với kích thước đã đặt */
-                object-position: center; /* Đảm bảo hình ảnh luôn được canh giữa */
-                border-radius: 0; /* Xóa bo góc nếu có */
+                width: 100%;
+                height: 100%; 
+                object-fit: cover;
+                object-position: center; 
+                border-radius: 0;
             }
 
+        .dropdown-menu {
+            position: absolute;
+            z-index: 1000;
+            display: none;
+            min-width: 10rem;
+            padding: 0.5rem 0;
+            margin: 0;
+            font-size: 1rem;
+            color: #212529;
+            text-align: left;
+            list-style: none;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
+            margin-left: 349px;
+        }
     </style>
 </head>
 <body>
@@ -355,6 +376,9 @@
                     var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', product.blogId);
                     saveIcon.addClass(savedBlogIds.includes(product.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
 
+                    var optionsIcon = $('<i class="options-icon fas fa-ellipsis-v"></i>').attr('data-user-id', product.userId);
+
+
                     var productInfoDiv = $('<div class="product-info"></div>');
 
                     var categoryElement = $('<span class="category"></span>').text(getCategoryName(product.categoryId));
@@ -367,10 +391,21 @@
                     var categoryReadingTimeContainer = $('<div class="category-reading-time"></div>');
                     categoryReadingTimeContainer.append(categoryElement, dashElement.clone(), readingTimeElement);
 
-                    productInfoDiv.append(categoryReadingTimeContainer, saveIcon, titleElement);
+                    productInfoDiv.append(categoryReadingTimeContainer, saveIcon, optionsIcon, titleElement); // Thêm optionsIcon vào đây
 
                     var contentElement = $('<p class="content"></p>').html(truncateContent(product.description, 100));
                     var avatarImg = $('<img>').attr('src', product.avatarUrl).addClass('avatar-img');
+
+                    // Thêm sự kiện click cho hình đại diện
+                    avatarImg.click(function (event) {
+                        event.preventDefault();
+
+                        // Lấy userId từ dữ liệu sản phẩm (product)
+                        var userId = product.userId;
+
+                        // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
+                        window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
+                    });
                     var userNameElement = $('<span class="date userName"></span>').text(product.firstName).addClass('username');
                     var createdAtElement = $('<span class="date createdAt"></span>').text(formatCreatedAt(product.createdAt));
                     var userInfoDiv = $('<div class="user-info"></div>');
@@ -470,6 +505,75 @@
                 totalPages = Math.ceil(allProducts.length / itemsPerPage);
                 updateUI();
             });
+            $(document).ready(function () {
+                var isDropdownVisible = false; // Biến trạng thái của dropdown menu
+
+                $(document).on('click', '.options-icon', function (event) {
+                    event.preventDefault();
+                    console.log("Options icon clicked!");
+
+                    var optionsIcon = $(this);
+                    var userIdToFollow = optionsIcon.attr('data-user-id');
+
+                    // Tạo dropdown menu nếu chưa tồn tại
+                    var dropdownMenu = optionsIcon.next('.dropdown-menu');
+                    if (dropdownMenu.length === 0) {
+                        dropdownMenu = $('<div class="dropdown-menu"></div>');
+
+                        var followOption = $('<div class="dropdown-item">Theo dõi</div>');
+                        followOption.on('click', function () {
+                            followUser(userIdToFollow);
+                        });
+
+                        dropdownMenu.append(followOption);
+                        optionsIcon.after(dropdownMenu); // Thêm dropdown menu vào sau options icon
+                    } else {
+                        isDropdownVisible = !isDropdownVisible; // Đảo ngược trạng thái của dropdown menu
+                        if (isDropdownVisible) {
+                            dropdownMenu.show(); // Hiển thị dropdown menu
+                        } else {
+                            dropdownMenu.hide(); // Ẩn dropdown menu
+                        }
+                    }
+                });
+
+                // Sự kiện click để ẩn dropdown menu khi click ra ngoài
+                $(document).on('click', function (e) {
+                    if (!$(e.target).closest('.options-icon').length && !$(e.target).closest('.dropdown-menu').length) {
+                        $('.dropdown-menu').hide();
+                        isDropdownVisible = false; // Đặt lại trạng thái của dropdown menu khi click ra ngoài
+                    }
+                });
+            });
+
+
+
+            function followUser(userIdToFollow) {
+                $.ajax({
+                    type: 'POST',
+                    url: 'http://localhost:5233/api/Accounts/FollowUser',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ followerId: userId, followeeId: userIdToFollow }),
+                    success: function () {
+                        showNotification('Đã theo dõi người dùng!', 'success');
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error following user:', error);
+                        showNotification('Đã xảy ra lỗi khi theo dõi người dùng!', 'error');
+                    }
+                });
+            }
+
+            function showNotification(message, type) {
+                var notification = $('<div class="notification"></div>').addClass(type).text(message);
+                $('body').append(notification);
+
+                setTimeout(function () {
+                    notification.fadeOut(400, function () {
+                        notification.remove();
+                    });
+                }, 3000);
+            }
 
             $(document).on('click', '.save-icon', function (event) {
                 event.preventDefault();

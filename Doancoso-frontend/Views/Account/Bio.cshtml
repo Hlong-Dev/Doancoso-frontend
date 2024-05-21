@@ -151,6 +151,10 @@
             .menu-item:hover {
                 background-color: #f5f5f5;
             }
+
+        h3, .h3 {
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -163,37 +167,167 @@
                     <p>henryday</p>
                     <button>Chỉnh sửa trang cá nhân</button>
                     <div class="stats">
-                        <p>0 followers</p>
-                        <p>0 following</p>
+                        <button onclick="showFollowers()">
+                            <h3 id="followerCount">0 followers</h3>
+                        </button>
+                        <button onclick="showFollowing()">
+                            <h3 id="followingCount">0 following</h3>
+                        </button>
                         <p>1 spiders</p>
                     </div>
+
                 </div>
             </div>
+
         </aside>
         <section class="content">
             <nav>
-                <a href="#">Bài viết (0)</a>
-                <a href="#">Series</a>
-                <a href="#" class="active">Đã lưu</a>
+                <a href="#" id="userPostsTab" class="active">Bài viết (0)</a>
+                <a href="#" id="savedPostsTab">Đã lưu</a>
             </nav>
             <div id="userPosts" class="posts">
                 <!-- User's posts will be injected here by JavaScript -->
             </div>
         </section>
     </main>
+
+    <!-- Modal Structure -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="userList"></div>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .user-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+            .user-list li {
+                padding: 10px;
+                border-bottom: 1px solid #ccc;
+                display: flex;
+                align-items: center;
+            }
+
+            .user-list img {
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+
+        nav a {
+            margin-right: 10px;
+            padding: 10px;
+            text-decoration: none;
+            color: black;
+            border-bottom: 2px solid transparent;
+        }
+
+            nav a.active {
+                border-bottom: 2px solid blue;
+                font-weight: bold;
+            }
+    </style>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
+        var categoriesMap = {};
         $(document).ready(function () {
             var token = localStorage.getItem('token');
             var headers = {};
-            var categoriesMap = {};
+
             if (token) {
                 headers.Authorization = 'Bearer ' + token;
             }
 
             var currentUser = getUserFromToken(token);
 
-            // Fetch categories
+            fetchCategories();
+            fetchFollowerFollowingCounts(currentUser.userId, headers);
+            updateUserProfile(currentUser);
+            fetchUserPosts(currentUser.userId, headers);
+
+            // Modal close functionality
+            $('.close').click(function () {
+                $('#userModal').hide();
+            });
+
+            $(window).click(function (event) {
+                if (event.target.id === 'userModal') {
+                    $('#userModal').hide();
+                }
+            });
+
+            $('#userPostsTab').click(function () {
+                setActiveTab('userPostsTab');
+                fetchUserPosts(currentUser.userId, headers);
+            });
+
+            $('#savedPostsTab').click(function () {
+                setActiveTab('savedPostsTab');
+                fetchSavedPosts(currentUser.userId, headers);
+            });
+        });
+
+        function setActiveTab(tabId) {
+            $('nav a').removeClass('active');
+            $('#' + tabId).addClass('active');
+        }
+
+        function fetchSavedPosts(userId, headers) {
+            $.ajax({
+                url: 'http://localhost:5233/api/Products/saved',
+                method: 'GET',
+                headers: headers,
+                success: function (savedBlogs) {
+                    displayPosts(savedBlogs);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Lỗi khi lấy bài viết đã lưu:', error);
+                }
+            });
+        }
+
+        function fetchCategories() {
             $.get('http://localhost:5233/api/Category', function (response) {
                 response.forEach(function (category) {
                     categoriesMap[category.id] = category.name;
@@ -202,74 +336,200 @@
             }).fail(function (xhr, status, error) {
                 console.error('Error fetching categories:', error);
             });
+        }
 
-            // Update user profile information
+        function fetchFollowerFollowingCounts(userId, headers) {
+            // Fetch followers count
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/Followers/${userId}`,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    $('#followerCount').text(response.length + " followers");
+                    $('#followerList ul').empty();
+                    response.forEach(function (user) {
+                        $('#followerList ul').append(`<li onclick="showUserModal('${user.avatarUrl}', '${user.userName}', '${user.firstName}', '${user.userId}')">${user.firstName} ${user.lastName}</li>`);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching followers:', error);
+                }
+            });
+
+            // Fetch following count
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/Following/${userId}`,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    $('#followingCount').text(response.length + " following");
+                    $('#followingList ul').empty();
+                    response.forEach(function (user) {
+                        $('#followingList ul').append(`<li onclick="showUserModal('${user.avatarUrl}', '${user.userName}', '${user.firstName}', '${user.userId}')">${user.firstName} ${user.lastName}</li>`);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching following:', error);
+                }
+            });
+        }
+
+        function updateUserProfile(user) {
             var profileSummary = $('.profile-summary');
-            profileSummary.find('img').attr('src', currentUser.avatarUrl);
-            profileSummary.find('h2').text(currentUser.firstName);
-            profileSummary.find('p').text(currentUser.userName);
+            profileSummary.find('img').attr('src', user.avatarUrl);
+            profileSummary.find('h2').text(user.firstName);
+            profileSummary.find('p').text(user.userName);
+        }
 
-            // Fetch public posts
+        function fetchUserPosts(userId, headers) {
             var urlPublic = "http://localhost:5233/api/Products";
             $.ajax({
                 url: urlPublic,
                 method: 'GET',
                 headers: headers,
                 success: function (publicBlogs) {
-                    var userPublicBlogs = publicBlogs.filter(blog => blog.userId === currentUser.userId);
+                    var userPublicBlogs = publicBlogs.filter(blog => blog.userId === userId);
 
                     // Fetch private posts
                     $.ajax({
-                        url: "http://localhost:5233/api/Products/private/" + currentUser.userId,
+                        url: "http://localhost:5233/api/Products/private/" + userId,
                         method: 'GET',
                         headers: headers,
                         success: function (privateBlogs) {
                             var allBlogs = userPublicBlogs.concat(privateBlogs);
                             var totalPosts = allBlogs.length;
-                            $('.profile-summary .stats p:nth-child(3)').text(totalPosts + " Bài viết");
+                            $('#userPostsTab').text('Bài viết (' + totalPosts + ')');
 
-                            displayPosts(allBlogs, categoriesMap);
+                            displayPosts(allBlogs);
                         }
                     });
                 }
             });
+        }
 
-            // Handle click outside menu to close it
-            $(document).click(function (e) {
-                if (!$(e.target).closest('.post').length) {
-                    $('.menu').hide();
-                }
+        function renderFollowers(followers) {
+            const followersContainer = $('#followersContainer');
+            followersContainer.empty();
+
+            followers.forEach(follower => {
+                const followerElement = $(`
+                            <div class="follower">
+                                <img src="${follower.avatarUrl}" alt="Avatar">
+                                <span>${follower.fullName}</span>
+                            </div>
+                        `);
+
+                followerElement.on('click', function () {
+                    window.location.href = `userProfile.html?userId=${follower.userId}`;
+                });
+
+                followersContainer.append(followerElement);
             });
-        });
+        }
 
-        function displayPosts(blogs, categoriesMap) {
+        function renderFollowing(following) {
+            const followingContainer = $('#followingContainer');
+            followingContainer.empty();
+
+            following.forEach(user => {
+                const followingElement = $(`
+                            <div class="following">
+                                <img src="${user.avatarUrl}" alt="Avatar">
+                                <span>${user.fullName}</span>
+                            </div>
+                        `);
+
+                followingElement.on('click', function () {
+                    window.location.href = `userProfile.html?userId=${user.userId}`;
+                });
+
+                followingContainer.append(followingElement);
+            });
+        }
+
+        function displayPosts(blogs) {
             var userPostsContainer = $('#userPosts');
             userPostsContainer.empty(); // Clear existing posts
 
             blogs.forEach(function (blog) {
-                var categoryName = categoriesMap[blog.categoryId] || 'General';
+                var categoryName = categoriesMap[blog.categoryId] || 'General'; // Get category name
                 var postHtml = `
-                    <div class="post">
-                        <img src="https://i.imgur.com/9Q8962w.png" alt="Post Image">
-                        <div class="post-info">
-                            <h3>${categoryName}</h3>
-                            <h2>${truncateText(blog.title, 100)}</h2>
-                            <p>${truncateText(blog.description, 100)}...</p>
-                            <div class="post-stats">
-                                <span>${blog.likes || 0} likes</span>
-                                <span>${blog.comments || 0} comments</span>
+                            <div class="post">
+                                <img src="https://i.imgur.com/9Q8962w.png" alt="Post Image">
+                                <div class="post-info">
+                                    <h3>${categoryName}</h3>
+                                    <h2>${truncateText(blog.title, 100)}</h2>
+                                    <p>${truncateText(blog.description, 100)}...</p>
+                                    <div class="post-stats">
+                                        <span>${blog.likes || 0} likes</span>
+                                        <span>${blog.comments || 0} comments</span>
+                                    </div>
+                                </div>
+                                <div class="options-icon fas fa-ellipsis-v" onclick="toggleMenu(this)"></div>
+                                <div class="menu">
+                                    <div class="menu-item" onclick="viewFullContent('${blog.slug}')">Xem chi tiết</div>
+                                    <div class="menu-item" onclick="editItem('${blog.slug}')">Update</div>
+                                    <div class="menu-item" onclick="deleteItem(${blog.blogId})">Delete</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="ellipsis-button" onclick="toggleMenu(this)">⋮</div>
-                        <div class="menu">
-                            <div class="menu-item" onclick="viewFullContent('${blog.slug}')">Xem chi tiết</div>
-                            <div class="menu-item" onclick="editItem('${blog.slug}')">Update</div>
-                            <div class="menu-item" onclick="deleteItem(${blog.blogId})">Delete</div>
-                        </div>
-                    </div>
-                `;
+                        `;
                 userPostsContainer.append(postHtml);
             });
+        }
+
+        function showFollowers() {
+            fetchFollowersOrFollowing('followers');
+        }
+
+        function showFollowing() {
+            fetchFollowersOrFollowing('following');
+        }
+
+        function fetchFollowersOrFollowing(type) {
+            var userId = getUserFromToken(localStorage.getItem('token')).userId;
+            var headers = {};
+            var token = localStorage.getItem('token');
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            var url = type === 'followers'
+                ? `http://localhost:5233/api/Accounts/Followers/${userId}`
+                : `http://localhost:5233/api/Accounts/Following/${userId}`;
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    displayUserList(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error fetching ${type}:`, error);
+                }
+            });
+        }
+
+        function displayUserList(users) {
+            var userList = $('#userList');
+            userList.empty();
+            var listHtml = '<ul class="user-list">';
+            users.forEach(function (user) {
+                console.log('User:', user); // Debug: log user data to ensure userId is present
+                var avatarLink = `<img src="${user.avatarUrl}" alt="Avatar" width="50" height="50" onclick="showUserModal('${user.avatarUrl}', '${user.userName}', '${user.firstName}', '${user.id}')">`;
+                listHtml += `
+                        <li>
+                            ${avatarLink}
+                            <div>
+                                <p>${user.userName}</p>
+                                <p>${user.firstName}</p>
+                            </div>
+                        </li>
+                    `;
+            });
+            listHtml += '</ul>';
+            userList.append(listHtml);
+            $('#userModal').show();
         }
 
         function toggleMenu(button) {
@@ -308,17 +568,19 @@
         }
 
         function getUserFromToken(token) {
-          
             var tokenPayload = JSON.parse(atob(token.split('.')[1]));
             return {
                 userId: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"],
                 userName: tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"],
                 firstName: decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"])),
                 avatarUrl: tokenPayload["AvatarUrl"],
-               
             };
         }
 
+        function showUserModal(avatarUrl, userName, firstName, userId) {
+            window.location.href = `http://localhost:5236/Account/UserProfile?userId=${userId}`;
+        }
     </script>
+
 </body>
 </html>

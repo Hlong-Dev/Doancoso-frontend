@@ -73,6 +73,8 @@
             font-weight: bold;
             color: black;
         }
+
+        
     </style>
 </head>
 <body>
@@ -153,21 +155,12 @@
                 <!-- END main-content -->
 
                 <div class="col-md-12 col-lg-4 sidebar">
-                    <div class="sidebar-box search-form-wrap">
-                        <form action="#" class="sidebar-search-form">
-                            <span class="bi-search"></span>
-                            <input type="text" class="form-control" id="s" placeholder="Type a keyword and hit enter">
-                        </form>
-                    </div>
-                    <!-- END sidebar-box -->
+                    
                     <div class="sidebar-box">
-                        <div class="bio text-center">
-                      @*       <img src="images/person_2.jpg" alt="Image Placeholder" class="img-fluid mb-3"> *@
+                        <div class="bio text-center" id="bio">
                             <img src="" alt="Avatar" id="avatarUrll" class="img-fluid mb-3">
-
                             <div class="bio-body">
                                 <h2 id="firstName"></h2>
-                                <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Exercitationem facilis sunt repellendus excepturi beatae porro debitis voluptate nulla quo veniam fuga sit molestias minus.</p>
                                 <p><a href="#" class="btn btn-primary btn-sm rounded px-2 py-2">Read my bio</a></p>
                                 <p class="social">
                                     <a href="#" class="p-2"><span class="fa fa-facebook"></span></a>
@@ -177,6 +170,7 @@
                                 </p>
                             </div>
                         </div>
+
                     </div>
                     <!-- END sidebar-box -->
                    
@@ -359,8 +353,21 @@
 
                     $('#content').html(data.content);
                     $('#avatarUrl').attr('src', data.avatarUrl);
-                    $('#avatarUrll').attr('src', data.avatarUrl);
+                    $('#avatarUrl').click(function () {
+                        // Lấy userId từ thuộc tính data-userId của hình đại diện
+                        var userId = data.userId
 
+                        // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
+                        window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
+                    });
+                    $('#avatarUrll').attr('src', data.avatarUrl);
+                    $('#avatarUrll').click(function () {
+                        // Lấy userId từ thuộc tính data-userId của hình đại diện
+                        var userId = data.userId
+
+                        // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
+                        window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
+                    });
                     // Trong hàm fetchBlogDetails
                     $('#coverImage').css('background-image', 'url(' + data.imageUrl + ')');
 

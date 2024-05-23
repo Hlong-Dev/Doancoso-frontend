@@ -18,7 +18,10 @@
             border-radius: 5px;
             display: none; /* Ẩn phần tử ban đầu */
         }
- 
+
+        .post-entry-sidebar ul li a img, .post-entry-footer ul li a img {
+            width: 250px;
+        }
         .product-info {
             width: -webkit-fill-available; /* Đặt kích thước cố định cho phần product-info */
             overflow: hidden; /* Ẩn nội dung vượt ra ngoài */
@@ -115,6 +118,39 @@
             border-radius: 0.25rem;
             margin-left: 349px;
         }
+
+        h4, .h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            width: 250px;
+            color: black;
+        }
+
+        .comment-wrap .heading, .search-result-wrap .heading {
+            font-size: 18px;
+            color: #000;
+            font-weight: 400;
+            margin-bottom: 16px;
+            padding-bottom: 7px;
+            border-bottom: 1px solid #e6e6e6;
+            font-weight: 600;
+        }
+        .popular-post img {
+            width: 250px;
+        }
+
+            .popular-post img.avatar-img {
+                width: 50px; /* hoặc kích thước mong muốn cho avatar */
+                height: 50px; /* hoặc kích thước mong muốn cho avatar */
+            }
+        .sidebar-box {
+            border: 1px solid #ebeef5; /* Thiết lập độ rộng và màu sắc của viền */
+            padding: 20px; /* Thêm padding để tạo khoảng cách giữa nội dung và viền */
+            border-radius: 5px; /* Bo tròn các góc của hộp */
+        }
+
+        /* Để thêm các kiểu viền khác nhau hoặc hiệu ứng, bạn có thể sử dụng các thuộc tính CSS khác như box-shadow, border-style, v.v. */
+
     </style>
 </head>
 <body>
@@ -137,69 +173,22 @@
             <div class="row posts-entry">
                 <div class="col-lg-8" id="productsContainer">
                     <!-- Sẽ thêm các sản phẩm vào đây -->
-
-                </div>
-                
-
+                </div>              
                 <div class="col-lg-4 sidebar">
-                    <div class="sidebar-box search-form-wrap mb-4">
-                        <form action="#" class="sidebar-search-form">
-                            <span class="bi-search"></span>
-                            <input type="text" class="form-control" id="s" placeholder="Type a keyword and hit enter">
-                        </form>
-                    </div>
+                    
                     <div class="sidebar-box">
                         <h3 class="heading">Danh Mục Blog</h3>
                         <ul class="categories"></ul>
                     </div>
                     <!-- END sidebar-box -->
                     <div class="sidebar-box">
-                        <h3 class="heading">Popular Posts</h3>
+                        <h3 class="heading">CŨ NHƯNG CHẤT</h3>
                         <div class="post-entry-sidebar">
                             <ul>
-                                <li>
-                                    <a href="">
-                                        <img src="images/img_1_sq.jpg" alt="Image placeholder" class="me-4 rounded">
-                                        <div class="text">
-                                            <h4>There’s a Cool New Way for Men to Wear Socks and Sandals</h4>
-                                            <div class="post-meta">
-                                                <span class="mr-2">March 15, 2018 </span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="">
-                                        <img src="images/img_2_sq.jpg" alt="Image placeholder" class="me-4 rounded">
-                                        <div class="text">
-                                            <h4>There’s a Cool New Way for Men to Wear Socks and Sandals</h4>
-                                            <div class="post-meta">
-                                                <span class="mr-2">March 15, 2018 </span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li>
-                               @*  <li>
-                                    <a href="">
-                                        <img src="images/img_3_sq.jpg" alt="Image placeholder" class="me-4 rounded">
-                                        <div class="text">
-                                            <h4>There’s a Cool New Way for Men to Wear Socks and Sandals</h4>
-                                            <div class="post-meta">
-                                                <span class="mr-2">March 15, 2018 </span>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </li> *@
+                                
                             </ul>
                         </div>
                     </div>
-                    <!-- END sidebar-box -->
-
-                   
-
-                    
-                    <!-- END sidebar-box -->
-
                     <div class="sidebar-box">
                         <h3 class="heading">Tags</h3>
                         <ul class="tags">
@@ -218,10 +207,6 @@
                         </ul>
                     </div>
                 </div>
-               
-                    
-             
-
             </div>
             <div id="pagination">
                 <ul class="pagination">
@@ -242,13 +227,10 @@
 
         </div>
     </div>
-
     @Html.Partial("_FooterPartial")
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-
-        <script>
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+   <script>
         $(document).ready(function () {
             var currentPage = 1; // Current page number
             var itemsPerPage = 7; // Number of items per page
@@ -295,6 +277,63 @@
                     console.error('Error fetching categories:', error);
                 });
             }
+            $.get('http://localhost:5233/api/Products/popular?count=2', function (data) {
+                // Xử lý dữ liệu trả về từ API
+                data.forEach(function (post) {
+                    // Tạo một mục "Popular Post"
+                    var popularPost = $('<li></li>').addClass('popular-post');
+
+                    // Tạo liên kết cho bài đăng
+                    var postLink = $('<a></a>').attr('href', '/Home/single?slug=' + post.slug);
+
+                    // Thêm hình ảnh vào liên kết
+                    var postImage = $('<img>').attr('src', post.imageUrl).attr('alt', 'Image placeholder').addClass('me-4 rounded popular-image');
+                    postLink.append(postImage);
+
+                    // Thêm tiêu đề vào liên kết
+                    var postTitle = $('<h4></h4>').text(post.title);
+                    postLink.append(postTitle);
+
+                    // Thêm thẻ span chứa ngày đăng vào mục
+                    var postMeta = $('<div></div>').addClass('post-meta');
+                    var postDate = $('<span></span>').addClass('mr-2').text(formatCreatedAt(post.createdAt));
+                    postMeta.append(postDate);
+
+                    // Tạo phần tử avatar
+                    var avatarImg = $('<img>').attr('src', post.avatarUrl).addClass('avatar-img');
+                    var userNameElement = $('<span class="userName"></span>').text(post.firstName);
+
+                    // Tạo phần tử category và reading time
+                    var categoryReadingTimeContainer = $('<div class="category-reading-time"></div>');
+                    var categoryElement = $('<span class="category"></span>').text(post.categoryName);
+
+                    var readingTimeElement = $('<span class="reading-time"></span>').text(calculateReadingTime(post.content) + ' phút đọc');
+
+                    categoryReadingTimeContainer.append(categoryElement, readingTimeElement);
+
+                    // Tạo phần tử lưu bài viết
+                    var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', post.blogId);
+                    saveIcon.addClass(savedBlogIds.includes(post.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
+
+                    // Tạo phần tử options icon
+                    var optionsIcon = $('<i class="options-icon fas fa-ellipsis-v"></i>').attr('data-user-id', post.userId);
+
+                    // Gộp các phần tử vào mục "Popular Post"
+                    popularPost.append(postLink);
+                    popularPost.append(categoryReadingTimeContainer);
+                   
+
+                    popularPost.append(avatarImg);
+                    popularPost.append(userNameElement);
+                    // popularPost.append(saveIcon);
+                    // popularPost.append(optionsIcon);
+                    // Thêm mục "Popular Post" vào danh sách "Popular Posts"
+                    $('.post-entry-sidebar ul').append(popularPost);
+                });
+            }).fail(function (xhr, status, error) {
+                console.error('Error fetching popular posts:', error);
+            });
+
 
             function calculateReadingTime(text) {
                 const wordsPerMinute = 200;
@@ -545,9 +584,6 @@
                     }
                 });
             });
-
-
-
             function followUser(userIdToFollow) {
                 $.ajax({
                     type: 'POST',
@@ -563,7 +599,6 @@
                     }
                 });
             }
-
             function showNotification(message, type) {
                 var notification = $('<div class="notification"></div>').addClass(type).text(message);
                 $('body').append(notification);
@@ -574,10 +609,8 @@
                     });
                 }, 3000);
             }
-
             $(document).on('click', '.save-icon', function (event) {
                 event.preventDefault();
-
                 var saveIcon = $(this);
                 var blogId = saveIcon.attr('data-blog-id');
                 var isSaved = saveIcon.hasClass('saved');
@@ -589,7 +622,6 @@
                     saveIcon.removeClass('far fa-bookmark').addClass('fa fa-bookmark saved');
                     showNotification('thành công!', 'success', 'save');
                 }
-
                 $.ajax({
                     type: 'POST',
                     url: 'http://localhost:5233/api/Products/saved',
@@ -607,7 +639,6 @@
                     }
                 });
             });
-
             function showNotification(message, type, action) {
                 var actionText = '';
                 if (action === 'save') {
@@ -630,11 +661,6 @@
                 });
             }
         });
-
     </script>
-
-
-
-
 </body>
 </html>

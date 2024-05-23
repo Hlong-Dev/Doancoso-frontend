@@ -42,12 +42,10 @@
                 transition: background-color 0.3s, color 0.3s; /* Đảm bảo có cả background-color và color */
             }
 
-
                 .dropdown-content a:hover {
                     background-color: #214252;
                     color: #fff;
                 }
-
 
         .dropdown:hover .dropdown-content {
             display: block;
@@ -231,7 +229,7 @@
 
         async function logout() {
             localStorage.removeItem('token'); // Xóa mã token khỏi localStorage khi đăng xuất
-            location.reload();
+            window.location.href = 'http://localhost:5236/Account/SignIn'; // Chuyển hướng đến trang đăng nhập
         }
 
         function toggleDropdown() {
@@ -252,7 +250,7 @@
 
 
         function writeMyPost() {
-            window.location.href = 'http://localhost:5236/Home/HangHoa';
+            window.location.href = 'http://localhost:5236/account/bio';
         }
 
         function writeNewPost() {

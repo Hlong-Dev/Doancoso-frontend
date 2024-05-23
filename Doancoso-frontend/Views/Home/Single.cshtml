@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
- 
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
-        
+
         /* Thêm kích thước cố định và thanh cuộn cho danh sách comment */
         .comment-list {
             max-height: 400px;
@@ -30,14 +30,15 @@
             border-radius: 5px;
             display: none; /* Ẩn phần tử ban đầu */
         }
+
         #title {
             font-weight: bold;
-           
         }
 
         .hidden {
             display: none;
         }
+
         #description {
             font-style: italic;
             color: white;
@@ -52,7 +53,7 @@
         p {
             margin-top: 0;
             margin-bottom: 1rem;
-           /*  color: black; */
+            /*  color: black; */
         }
 
         h2, .h2 {
@@ -73,6 +74,7 @@
             font-weight: bold;
             color: black;
         }
+
     </style>
 </head>
 <body>
@@ -86,9 +88,9 @@
                         <span class="d-inline-block mt-1" id="categoryId" style="color :white;"></span>
                         <div style="height: 25px;"></div>
                         <h1 id="title" class="mb-4"></h1>
-                        
+
                         <div class="post-meta align-items-center text-left">
-                         @*    <figure class="author-figure mb-0 me-3 d-inline-block"><img src="images/person_1.jpg" alt="Image" class="img-fluid"></figure>
+                            @*    <figure class="author-figure mb-0 me-3 d-inline-block"><img src="images/person_1.jpg" alt="Image" class="img-fluid"></figure>
                             @*  <span class="d-inline-block mt-1">By Carl Atkinson</span>
                             @*  <span>&nbsp;-&nbsp; February 10, 2019</span> *@
                             <span id="description" class="d-inline-block mt-1"></span>
@@ -98,7 +100,7 @@
 
                         </div>
                     </div>
-                 </div>
+                </div>
             </div>
         </div>
     </div>
@@ -107,12 +109,12 @@
         <div class="container">
 
             <div class="row blog-entries element-animate">
-                
-              
+
+
                 <div class="post-meta align-items-center text-left">
                     <img src="" alt="Avatar" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; object-fit: cover; " id="avatarUrl">
 
-                 
+
                     <span class="d-inline-block mt-2" id="userName">
                     </span>
                     <span class="d-inline-block mt-1" id="avatarUrl">
@@ -128,6 +130,26 @@
 
 
 
+
+
+                </div>
+                <div class="col-md-12 col-lg-4 sidebar">
+
+                    <div class="sidebar-box">
+                        <div class="bio text-center" id="bio">
+                            <img src="" alt="Avatar" id="avatarUrll" class="img-fluid mb-3">
+                            <div class="bio-body">
+                                <h2 id="firstName"></h2>
+                                <p><a href="#" class="btn btn-primary btn-sm rounded px-2 py-2">Read my bio</a></p>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                </div>
+                <div class="col-md-12 col-lg-12 main-content">
                     <div class="pt-5 comment-wrap">
                         <h3 class="mb-5 heading">Bình luận (<span id="commentCount">0</span>)</h3>
                         <p id="noCommentsMessage" style="display: none;">Bài viết chưa có bình luận nào, hãy là người đầu tiên bình luận.</p>
@@ -148,41 +170,10 @@
                         </div>
                     </div>
 
+                    <!-- END main-content -->
+                    <!-- END sidebar -->
+
                 </div>
-
-                <!-- END main-content -->
-
-                <div class="col-md-12 col-lg-4 sidebar">
-                    <div class="sidebar-box search-form-wrap">
-                        <form action="#" class="sidebar-search-form">
-                            <span class="bi-search"></span>
-                            <input type="text" class="form-control" id="s" placeholder="Type a keyword and hit enter">
-                        </form>
-                    </div>
-                    <!-- END sidebar-box -->
-                    <div class="sidebar-box">
-                        <div class="bio text-center">
-                      @*       <img src="images/person_2.jpg" alt="Image Placeholder" class="img-fluid mb-3"> *@
-                            <img src="" alt="Avatar" id="avatarUrll" class="img-fluid mb-3">
-
-                            <div class="bio-body">
-                                <h2 id="firstName"></h2>
-                                <p class="mb-4">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Exercitationem facilis sunt repellendus excepturi beatae porro debitis voluptate nulla quo veniam fuga sit molestias minus.</p>
-                                <p><a href="#" class="btn btn-primary btn-sm rounded px-2 py-2">Read my bio</a></p>
-                                <p class="social">
-                                    <a href="#" class="p-2"><span class="fa fa-facebook"></span></a>
-                                    <a href="#" class="p-2"><span class="fa fa-twitter"></span></a>
-                                    <a href="#" class="p-2"><span class="fa fa-instagram"></span></a>
-                                    <a href="#" class="p-2"><span class="fa fa-youtube-play"></span></a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- END sidebar-box -->
-                   
-                </div>
-                <!-- END sidebar -->
-
             </div>
         </div>
     </section>
@@ -283,7 +274,7 @@
                 // Xóa nội dung comment sau khi gửi
                 $('#commentContent').val('');
             });
-          
+
 
 
 
@@ -346,7 +337,7 @@
                     $('#title').text(data.title);
                     $('#imageUrl').text(data.imageUrl);
                     $('#description').text(data.description);
-                   
+
 
                     // Sử dụng categoryName để hiển thị tên danh mục
                     $('#categoryId').text(data.categoryId);
@@ -359,8 +350,21 @@
 
                     $('#content').html(data.content);
                     $('#avatarUrl').attr('src', data.avatarUrl);
-                    $('#avatarUrll').attr('src', data.avatarUrl);
+                    $('#avatarUrl').click(function () {
+                        // Lấy userId từ thuộc tính data-userId của hình đại diện
+                        var userId = data.userId
 
+                        // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
+                        window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
+                    });
+                    $('#avatarUrll').attr('src', data.avatarUrl);
+                    $('#avatarUrll').click(function () {
+                        // Lấy userId từ thuộc tính data-userId của hình đại diện
+                        var userId = data.userId
+
+                        // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
+                        window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
+                    });
                     // Trong hàm fetchBlogDetails
                     $('#coverImage').css('background-image', 'url(' + data.imageUrl + ')');
 

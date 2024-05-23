@@ -1,0 +1,648 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 10px;
+            background-color: #0C2F40;
+            color: #fff;
+            border-radius: 5px;
+            display: none; /* Ẩn phần tử ban đầu */
+        }
+        body {
+            font-family: "Work Sans", sans-serif;
+            font-weight: 400;
+            font-size: 15px;
+            overflow-x: hidden;
+            position: relative;
+            background: #f5f7fa;
+        }
+
+        main {
+            display: flex;
+            margin: 20px;
+        }
+
+        aside {
+            width: 25%;
+            padding-right: 20px;
+        }
+
+        .profile-summary {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+            .profile-summary img {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                margin-bottom: 10px;
+            }
+
+            .profile-summary h2 {
+                margin: 10px 0;
+            }
+
+            .profile-summary p {
+                color: gray;
+            }
+
+            .profile-summary button {
+                margin: 10px 0;
+                padding: 10px 20px;
+                background-color: #214252;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            .profile-summary .stats p {
+                margin: 5px 0;
+            }
+
+        .content {
+            width: 75%;
+        }
+
+        .posts {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .post {
+            background-color: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            position: relative;
+        }
+
+            .post img {
+                width: 150px;
+                height: 150px;
+                border-radius: 8px;
+                margin-right: 20px;
+            }
+
+        .post-info {
+            flex: 1;
+        }
+
+            .post-info h3 {
+                margin: 0;
+                font-family: "Work Sans", sans-serif;
+                font-weight: 400;
+                font-size: 15px;
+            }
+
+            .post-info h2 {
+                margin: 10px 0;
+                margin-top: 10px;
+                overflow: hidden;
+                margin-bottom: 5px;
+                font-weight: 600;
+                font-size: 20px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                color: #000000;
+            }
+
+            .post-info p {
+                color: gray;
+            }
+
+        .post-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: gray;
+        }
+
+        .ellipsis-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            right: 20px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+            .menu-item:hover {
+                background-color: #f5f5f5;
+            }
+
+        h3, .h3 {
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+    
+
+    <main>
+        <div id="notification" class="notification"></div>
+        <aside>
+            <div class="profile-summary">
+                <img src="https://i.imgur.com/BvIv2iv.png" alt="Profile Picture" id="userAvatar">
+                <div class="profile-info">
+                    <h2 id="userFullName">Ngô Long</h2>
+                    <p id="userName">waity7colors@gmail.com</p>
+                    <button id="followButton" onclick="followUser()">Theo dõi</button>
+                    <div class="stats">
+                        <h3 id="postCount">0 Bài viết</h3>
+                        <button onclick="showFollowers()">
+                            <h3 id="followerCount">0 followers</h3>
+                        </button>
+                        <button onclick="showFollowing()">
+                            <h3 id="followingCount">0 following</h3>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </aside>
+        <section class="content">
+            <nav>
+                <a href="#" id="userPostsTab" class="active">Bài viết (0)</a>
+              
+            </nav>
+            <div id="userPosts" class="posts">
+                <!-- User's posts will be injected here by JavaScript -->
+            </div>
+        </section>
+    </main>
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="userList"></div>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            text-align: center;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .user-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+            .user-list li {
+                padding: 10px;
+                border-bottom: 1px solid #ccc;
+                display: flex;
+                align-items: center;
+            }
+
+            .user-list img {
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+
+        nav a {
+            margin-right: 10px;
+            padding: 10px;
+            text-decoration: none;
+            color: black;
+            border-bottom: 2px solid transparent;
+        }
+
+            nav a.active {
+                border-bottom: 2px solid blue;
+                font-weight: bold;
+            }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        var categoriesMap = {};
+
+        $(document).ready(function () {
+            var userId = getQueryParameter('userId');
+            var token = localStorage.getItem('token');
+            var headers = {};
+
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            $('.close').click(function () {
+                $('#userModal').hide();
+            });
+
+            $(window).click(function (event) {
+                if (event.target.id === 'userModal') {
+                    $('#userModal').hide();
+                }
+            });
+            $('#userPostsTab').click(function () {
+                setActiveTab('userPostsTab');
+                fetchUserPosts(currentUser.userId, headers);
+            });
+            // Fetch user profile information
+            $.ajax({
+                url: 'http://localhost:5233/api/Accounts/UserProfile/' + userId,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    $('#userAvatar').attr('src', response.avatarUrl);
+                    $('#userFullName').text(response.fullName);
+                    $('#userName').text(response.userName);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching user profile:', error);
+                }
+            });
+
+            // Fetch categories
+            $.ajax({
+                url: 'http://localhost:5233/api/Category',
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    response.forEach(function (category) {
+                        categoriesMap[category.id] = category.name;
+                    });
+                    // Update UI after fetching categories
+                    updateUI();
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching categories:', error);
+                }
+            });
+
+            // Fetch follower and following counts
+            fetchFollowerFollowingCounts(userId, headers);
+
+            // Fetch user posts
+            var urlPublic = "http://localhost:5233/api/Products";
+            $.ajax({
+                url: urlPublic,
+                method: 'GET',
+                headers: headers,
+                success: function (publicBlogs) {
+                    var userPublicBlogs = publicBlogs.filter(blog => blog.userId === userId);
+
+                    // Fetch private posts
+                    $.ajax({
+                        url: "http://localhost:5233/api/Products/private/" + userId,
+                        method: 'GET',
+                        headers: headers,
+                        success: function (privateBlogs) {
+                            var allBlogs = userPublicBlogs.concat(privateBlogs);
+                            var totalPosts = allBlogs.length;
+                            $('#userPostsTab').text('Bài viết (' + totalPosts + ')');
+
+
+                            // Display posts after fetching
+                            displayPosts(allBlogs);
+                        }
+                    });
+                }
+            });
+        });
+
+        function fetchFollowerFollowingCounts(userId, headers) {
+            // Fetch followers count
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/Followers/${userId}`,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    $('#followerCount').text(response.length + " followers");
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching followers:', error);
+                }
+            });
+
+            // Fetch following count
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/Following/${userId}`,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    $('#followingCount').text(response.length + " following");
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching following:', error);
+                }
+            });
+        }
+
+        function displayPosts(blogs) {
+            var userPostsContainer = $('#userPosts');
+            userPostsContainer.empty(); // Clear existing posts
+
+            blogs.forEach(function (blog) {
+                var categoryName = categoriesMap[blog.categoryId] || 'General'; // Get category name
+                var postHtml = `
+                        <div class="post">
+                            <img src="https://i.imgur.com/9Q8962w.png" alt="Post Image">
+                            <div class="post-info">
+                                <h3>${categoryName}</h3>
+                                <h2>${truncateText(blog.title, 100)}</h2>
+                                <p>${truncateText(blog.description, 100)}...</p>
+                                <div class="post-stats">
+                                    <span>${blog.likes || 0} likes</span>
+                                    <span>${blog.comments || 0} comments</span>
+                                </div>
+                            </div>
+                            <div class="options-icon fas fa-ellipsis-v" onclick="toggleMenu(this)"></div>
+                            <div class="menu">
+                                <div class="menu-item" onclick="viewFullContent('${blog.slug}')">Xem chi tiết</div>
+                                <div class="menu-item" onclick="editItem('${blog.slug}')">Update</div>
+                                <div class="menu-item" onclick="deleteItem(${blog.blogId})">Delete</div>
+                            </div>
+                        </div>
+                    `;
+                userPostsContainer.append(postHtml);
+            });
+        }
+
+        function toggleMenu(button) {
+            var menu = $(button).next('.menu');
+            $('.menu').not(menu).hide(); // Hide other open menus
+            menu.toggle(); // Toggle current menu
+        }
+
+        function truncateText(text, maxLength) {
+            if (text.length > maxLength) {
+                return text.slice(0, maxLength) + '...';
+            }
+            return text;
+        }
+        function checkFollowStatus() {
+            var userId = getCurrentUserId();
+            var targetUserId = getQueryParameter('userId');
+            var token = localStorage.getItem('token');
+            var headers = {};
+
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/IsFollowing/${userId}/${targetUserId}`,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    updateFollowButton(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error checking follow status:', error);
+                }
+            });
+        }
+
+        // Update follow button based on follow status
+        function updateFollowButton(isFollowing) {
+            var followButton = $('#followButton');
+            if (isFollowing) {
+                followButton.text('Đang theo dõi');
+                followButton.off('click');
+                followButton.click(unfollowUser);
+            } else {
+                followButton.text('Theo dõi');
+                followButton.off('click');
+                followButton.click(followUser);
+            }
+        }
+        function getQueryParameter(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function followUser() {
+            var userIdToFollow = getQueryParameter('userId');
+            var currentUserId = getCurrentUserId();
+            var token = localStorage.getItem('token');
+            var headers = {};
+
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/FollowUser`,
+                method: 'POST',
+                headers: headers,
+                contentType: 'application/json',
+                data: JSON.stringify({ followerId: currentUserId, followeeId: userIdToFollow }),
+                success: function () {
+                    showNotification('thành công.', 'success', 'save'); // Hiển thị thông báo lưu thành công
+                    updateFollowButton(true); // Cập nhật nút theo dõi thành đang theo dõi
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error following user:', error);
+                    showNotification('thành công.', 'error', 'save'); // Hiển thị thông báo lưu không thành công
+                }
+            });
+        }
+
+        function unfollowUser() {
+            var userIdToUnfollow = getQueryParameter('userId');
+            var currentUserId = getCurrentUserId();
+            var token = localStorage.getItem('token');
+            var headers = {};
+
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            $.ajax({
+                url: `http://localhost:5233/api/Accounts/UnfollowUser`,
+                method: 'DELETE',
+                headers: headers,
+                contentType: 'application/json',
+                data: JSON.stringify({ followerId: currentUserId, followeeId: userIdToUnfollow }),
+                success: function () {
+                    showNotification('thành công.', 'success', 'unsave'); // Hiển thị thông báo bỏ lưu thành công
+                    updateFollowButton(false); // Cập nhật nút theo dõi thành không theo dõi
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error unfollowing user:', error);
+                    showNotification('Lỗi.', 'error', 'unsave'); // Hiển thị thông báo bỏ lưu không thành công
+                }
+            });
+        }
+
+        function updateFollowButton(isFollowing) {
+            var followButton = $('#followButton');
+            if (isFollowing) {
+                followButton.text('Đang theo dõi');
+                // Remove existing click event handler to prevent multiple bindings
+                followButton.off('click');
+                // Bind click event to unfollowUser function
+                followButton.click(unfollowUser);
+            } else {
+                followButton.text('Theo dõi');
+                // Remove existing click event handler to prevent multiple bindings
+                followButton.off('click');
+                // Bind click event to followUser function
+                followButton.click(followUser);
+            }
+        }
+
+        // Hàm này sẽ được gọi khi trang được load
+        $(document).ready(function () {
+            // Kiểm tra trạng thái theo dõi khi trang được load
+            checkFollowStatus();
+        });
+
+        // Hàm để lấy userID của người đang truy cập
+        function getCurrentUserId() {
+            var token = localStorage.getItem('token');
+            if (token) {
+                var tokenPayload = JSON.parse(atob(token.split('.')[1]));
+                return tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            }
+            return null; // Trả về null nếu không tìm thấy userID
+        }
+
+        // Function to hiển thị modal
+        function showFollowers() {
+            fetchFollowersOrFollowing('followers', getQueryParameter('userId'));
+        }
+
+        function showFollowing() {
+            fetchFollowersOrFollowing('following', getQueryParameter('userId'));
+        }
+
+        function fetchFollowersOrFollowing(type, userId) {
+            var headers = {};
+            var token = localStorage.getItem('token');
+            if (token) {
+                headers.Authorization = 'Bearer ' + token;
+            }
+
+            var url = type === 'followers'
+                ? `http://localhost:5233/api/Accounts/Followers/${userId}`
+                : `http://localhost:5233/api/Accounts/Following/${userId}`;
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                headers: headers,
+                success: function (response) {
+                    displayUserList(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error fetching ${type}:`, error);
+                }
+            });
+        }
+
+        function displayUserList(users) {
+            var userList = $('#userList');
+            userList.empty();
+            var listHtml = '<ul class="user-list">';
+            users.forEach(function (user) {
+                console.log('User:', user); // Debug: log user data to ensure userId is present
+                var avatarLink = `<img src="${user.avatarUrl}" alt="Avatar" width="50" height="50" onclick="showUserModal('${user.avatarUrl}', '${user.userName}', '${user.firstName}', '${user.id}')">`;
+                listHtml += `
+                        <li>
+                            ${avatarLink}
+                            <div>
+                                <p>${user.userName}</p>
+                                <p>${user.firstName}</p>
+                            </div>
+                        </li>
+                    `;
+            });
+            listHtml += '</ul>';
+            userList.append(listHtml);
+            $('#userModal').show();
+        }
+
+        function showUserModal(avatarUrl, userName, firstName, userId) {
+            window.location.href = `http://localhost:5236/Account/UserProfile?userId=${userId}`;
+        }
+        function showNotification(message, type, action) {
+            var actionText = '';
+            if (action === 'save') {
+                actionText = 'Theo dõi người dùng';
+            } else if (action === 'unsave') {
+                actionText = 'Bỏ theo dõi người dùng';
+            }
+
+            var notification = $('<div class="notification"></div>');
+            notification.text(actionText + ' ' + message);
+            notification.addClass(type);
+            if ($('.notification').length >= 1) {
+                $('.notification:first').remove();
+            }
+
+            $('body').append(notification);
+
+            notification.fadeIn().delay(3000).fadeOut(function () {
+                $(this).remove();
+            });
+        }
+    </script>
+</body>
+</html>

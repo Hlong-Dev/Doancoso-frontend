@@ -20,5 +20,9 @@ namespace Doancoso_frontend.Controllers
         {
             return View();
         }
+        public IActionResult UserProfile()
+        {
+            return View();
+        }
     }
 }

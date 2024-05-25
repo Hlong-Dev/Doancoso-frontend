@@ -1,27 +1,49 @@
 ﻿<section class="section bg-light">
     <div class="container">
-        <div class="row align-items-stretch retro-layout" id="productsContainer">
-            <!-- Các bài viết sẽ được chèn vào đây -->
+        <div class="col-md-12">
+            <h2>Bài viết của tôi</h2>
+        </div>
+        <div class="row align-items-stretch retro-layout" id="userProductsContainer">
+            <!-- Các bài viết của người dùng sẽ được chèn vào đây -->
         </div>
         <div class="row">
             <div class="col-md-12 text-center">
-                <button id="prevPage" class="btn btn-primary">Trước</button>
-                <span id="currentPage">Trang 1</span>
-                <button id="nextPage" class="btn btn-primary">Tiếp theo</button>
+                <button id="userPrevPage" class="btn btn-primary">Trước</button>
+                <span id="userCurrentPage">Trang 1</span>
+                <button id="userNextPage" class="btn btn-primary">Tiếp theo</button>
             </div>
         </div>
     </div>
 </section>
+
+<section class="section bg-light">
+    <div class="container">
+        <div class="col-md-12">
+            <h2>Bài viết bạn có thể thích</h2>
+        </div>
+        <div class="row align-items-stretch retro-layout" id="allProductsContainer">
+            <!-- Tất cả bài viết sẽ được chèn vào đây -->
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <button id="allPrevPage" class="btn btn-primary">Trước</button>
+                <span id="allCurrentPage">Trang 1</span>
+                <button id="allNextPage" class="btn btn-primary">Tiếp theo</button>
+            </div>
+        </div>
+    </div>
+</section>
+
 @Html.Partial("_FooterPartial")
 
-<!-- End retro layout blog posts -->
-<!-- Include jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function () {
-        var currentPage = 1; // Trang hiện tại
+        var userCurrentPage = 1; // Trang hiện tại của người dùng
+        var allCurrentPage = 1; // Trang hiện tại của tất cả bài viết
         var itemsPerPage = 3; // Số sản phẩm trên mỗi trang
-        var allProducts = []; // Lưu danh sách sản phẩm
+        var userProducts = []; // Lưu danh sách sản phẩm của người dùng
+        var allProducts = []; // Lưu danh sách tất cả sản phẩm
         var categoriesMap = {}; // Map of categories
         var token = localStorage.getItem('token');
         var headers = {};
@@ -40,15 +62,21 @@
                 avatarUrl: tokenPayload["AvatarUrl"],
             };
         }
+
         // Hàm lấy sản phẩm từ API
         function fetchProducts() {
             $.get('http://localhost:5233/api/Products', function (data) {
-                // Filter products by current userId
-                allProducts = data.filter(function (product) {
+                // Separate user's products and all products
+                userProducts = data.filter(function (product) {
                     return product.userId === currentUser.userId;
                 }).sort(function (a, b) {
                     return new Date(b.createdAt) - new Date(a.createdAt);
                 });
+
+                allProducts = data.sort(function (a, b) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                });
+
                 updateUI();
             }).fail(function () {
                 console.error('Failed to fetch products.');
@@ -63,28 +91,48 @@
                 console.error('Error fetching categories:', error);
             });
         }
+
         // Hàm cập nhật UI dựa trên danh sách sản phẩm từ API
         function updateUI() {
-            var currentItems = getCurrentPageItems();
+            var userCurrentItems = getCurrentPageItems(userProducts, userCurrentPage);
+            var allCurrentItems = getCurrentPageItems(allProducts, allCurrentPage);
 
             // Xóa tất cả sản phẩm trước đó
-            $('#productsContainer').empty();
+            $('#userProductsContainer').empty();
+            $('#allProductsContainer').empty();
 
-            // Hiển thị sản phẩm từ danh sách
-            currentItems.forEach(function (product) {
+            // Hiển thị sản phẩm của người dùng
+            userCurrentItems.forEach(function (product) {
                 var categoryName = getCategoryName(product.categoryId);
                 var productHTML = `
-            <div class="col-md-4">
-                <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
-                    <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
-                    <div class="text">
-                        <span class="date">${categoryName}</span>
-                        <h2>${product.title}</h2>
-                    </div>
-                </a>
-            </div>
-        `;
-                $('#productsContainer').append(productHTML);
+                        <div class="col-md-4">
+                            <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
+                                <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
+                                <div class="text">
+                                    <span class="date">${categoryName}</span>
+                                    <h2>${product.title}</h2>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                $('#userProductsContainer').append(productHTML);
+            });
+
+            // Hiển thị tất cả sản phẩm
+            allCurrentItems.forEach(function (product) {
+                var categoryName = getCategoryName(product.categoryId);
+                var productHTML = `
+                        <div class="col-md-4">
+                            <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
+                                <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
+                                <div class="text">
+                                    <span class="date">${categoryName}</span>
+                                    <h2>${product.title}</h2>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                $('#allProductsContainer').append(productHTML);
             });
 
             // Hàm lấy tên danh mục từ id danh mục
@@ -92,47 +140,57 @@
                 return categoriesMap[categoryId] || 'Unknown';
             }
 
-            // Cập nhật trang hiện tại và nút Previous/Next
-            $('#currentPage').text('Trang ' + currentPage);
-            $('#prevPage').prop('disabled', currentPage === 1);
-            $('#nextPage').prop('disabled', currentPage === Math.ceil(allProducts.length / itemsPerPage));
+            // Cập nhật trang hiện tại và nút Previous/Next cho user products
+            $('#userCurrentPage').text('Trang ' + userCurrentPage);
+            $('#userPrevPage').prop('disabled', userCurrentPage === 1);
+            $('#userNextPage').prop('disabled', userCurrentPage === Math.ceil(userProducts.length / itemsPerPage));
 
-            $(document).on('click', '.h-entry h2', function (e) {
-                e.preventDefault();
-                var slug = $(this).closest('.h-entry').attr('data-slug'); // Lấy slug từ thuộc tính data-slug của phần tử cha
-                // Chuyển hướng đến trang chi tiết của bài viết với slug tương ứng
-                window.location.href = '/Home/single?slug=' + slug;
-            });
-
-
-
+            // Cập nhật trang hiện tại và nút Previous/Next cho all products
+            $('#allCurrentPage').text('Trang ' + allCurrentPage);
+            $('#allPrevPage').prop('disabled', allCurrentPage === 1);
+            $('#allNextPage').prop('disabled', allCurrentPage === Math.ceil(allProducts.length / itemsPerPage));
         }
 
         // Hàm lấy sản phẩm trên trang hiện tại
-        function getCurrentPageItems() {
+        function getCurrentPageItems(products, currentPage) {
             var startIndex = (currentPage - 1) * itemsPerPage;
             var endIndex = startIndex + itemsPerPage;
-            return allProducts.slice(startIndex, endIndex);
+            return products.slice(startIndex, endIndex);
         }
 
-        // Xử lý khi click vào nút Previous
-        $('#prevPage').click(function () {
-            if (currentPage > 1) {
-                currentPage--;
+        // Xử lý khi click vào nút Previous của user products
+        $('#userPrevPage').click(function () {
+            if (userCurrentPage > 1) {
+                userCurrentPage--;
                 updateUI();
             }
         });
 
-        // Xử lý khi click vào nút Next
-        $('#nextPage').click(function () {
-            if (currentPage < Math.ceil(allProducts.length / itemsPerPage)) {
-                currentPage++;
+        // Xử lý khi click vào nút Next của user products
+        $('#userNextPage').click(function () {
+            if (userCurrentPage < Math.ceil(userProducts.length / itemsPerPage)) {
+                userCurrentPage++;
+                updateUI();
+            }
+        });
+
+        // Xử lý khi click vào nút Previous của all products
+        $('#allPrevPage').click(function () {
+            if (allCurrentPage > 1) {
+                allCurrentPage--;
+                updateUI();
+            }
+        });
+
+        // Xử lý khi click vào nút Next của all products
+        $('#allNextPage').click(function () {
+            if (allCurrentPage < Math.ceil(allProducts.length / itemsPerPage)) {
+                allCurrentPage++;
                 updateUI();
             }
         });
 
         // Khởi động lấy sản phẩm khi tài liệu được tải
-        fetchProducts(currentUser.userId);
+        fetchProducts();
     });
-
 </script>

@@ -7,7 +7,28 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
+     #content{
+            font-size: 19px;
+            /* margin-top: 0; */
+            /* margin-bottom: 1rem; */
+            /* color: black; */
+            font-weight: 400;
+            margin: 0 0 20px;
+            line-height: 32px;
+            font-family: "Noto Serif", Regular, Times New Roman;
+     }
+        /* Thiết lập chiều rộng tối đa và căn giữa phần tử chính */
+        .main-contentt {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: auto;
+            width: 100%; /* Đảm bảo phần tử chính chiếm toàn bộ chiều rộng tối đa của nó */
+            margin: 20px 0; /* Khoảng cách trên dưới để tạo không gian xung quanh */
+            padding: 20px;
+        }
 
+      
         /* Thêm kích thước cố định và thanh cuộn cho danh sách comment */
         .comment-list {
             max-height: 400px;
@@ -44,8 +65,17 @@
             color: white;
         }
 
-        .mt-1
+        .custom-avatar {
+            width: 45px !important;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
+        .mt-1
+        img, #avatarUrl{
+            width: 45px !important;
+        }
         .row.same-height {
             text-align: left; /* Đặt căn lề trái cho tất cả các phần tử con */
         }
@@ -75,6 +105,11 @@
             color: black;
         }
 
+        img, svg {
+            vertical-align: middle;
+            /* width: 861px !important; */
+            width: -webkit-fill-available !important;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +156,9 @@
                     </span>
                     <span id="createdAt"></span>
                 </div>
+                <div>
+
+                </div>
                 <div class="col-md-12 col-lg-8 main-content">
 
                     <div id="content"></div>
@@ -149,7 +187,7 @@
 
 
                 </div>
-                <div class="col-md-12 col-lg-12 main-content">
+                <div class="col-md-12 col-lg-12 main-contentt">
                     <div class="pt-5 comment-wrap">
                         <h3 class="mb-5 heading">Bình luận (<span id="commentCount">0</span>)</h3>
                         <p id="noCommentsMessage" style="display: none;">Bài viết chưa có bình luận nào, hãy là người đầu tiên bình luận.</p>

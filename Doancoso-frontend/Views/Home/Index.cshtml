@@ -1,4 +1,79 @@
-﻿<section class="section bg-light">
+﻿<style>
+    .card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-img-top {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .card-text {
+        margin-bottom: 0.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .featured-img {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .h-entry .text {
+        padding: 10px;
+    }
+
+    .d-flex {
+        display: flex;
+        align-items: center;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem;
+    }
+
+    .date {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .text-muted {
+        flex-shrink: 0;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+        .card-body .text {
+            flex-grow: 1;
+        }
+
+        .card-body .mt-auto {
+            margin-top: auto;
+        }
+</style>
+<section class="section bg-light">
     <div class="container">
         <div class="col-md-12">
             <h2>Bài viết của tôi</h2>
@@ -19,17 +94,10 @@
 <section class="section bg-light">
     <div class="container">
         <div class="col-md-12">
-            <h2>Bài viết bạn có thể thích</h2>
+            <h2>Tất cả bài viết</h2>
         </div>
         <div class="row align-items-stretch retro-layout" id="allProductsContainer">
             <!-- Tất cả bài viết sẽ được chèn vào đây -->
-        </div>
-        <div class="row">
-            <div class="col-md-12 text-center">
-                <button id="allPrevPage" class="btn btn-primary">Trước</button>
-                <span id="allCurrentPage">Trang 1</span>
-                <button id="allNextPage" class="btn btn-primary">Tiếp theo</button>
-            </div>
         </div>
     </div>
 </section>
@@ -40,7 +108,6 @@
 <script>
     $(document).ready(function () {
         var userCurrentPage = 1; // Trang hiện tại của người dùng
-        var allCurrentPage = 1; // Trang hiện tại của tất cả bài viết
         var itemsPerPage = 3; // Số sản phẩm trên mỗi trang
         var userProducts = []; // Lưu danh sách sản phẩm của người dùng
         var allProducts = []; // Lưu danh sách tất cả sản phẩm
@@ -66,7 +133,6 @@
         // Hàm lấy sản phẩm từ API
         function fetchProducts() {
             $.get('http://localhost:5233/api/Products', function (data) {
-                // Separate user's products and all products
                 userProducts = data.filter(function (product) {
                     return product.userId === currentUser.userId;
                 }).sort(function (a, b) {
@@ -95,7 +161,6 @@
         // Hàm cập nhật UI dựa trên danh sách sản phẩm từ API
         function updateUI() {
             var userCurrentItems = getCurrentPageItems(userProducts, userCurrentPage);
-            var allCurrentItems = getCurrentPageItems(allProducts, allCurrentPage);
 
             // Xóa tất cả sản phẩm trước đó
             $('#userProductsContainer').empty();
@@ -105,35 +170,45 @@
             userCurrentItems.forEach(function (product) {
                 var categoryName = getCategoryName(product.categoryId);
                 var productHTML = `
-                        <div class="col-md-4">
-                            <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
-                                <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
-                                <div class="text">
-                                    <span class="date">${categoryName}</span>
-                                    <h2>${product.title}</h2>
-                                </div>
-                            </a>
-                        </div>
-                    `;
+                            <div class="col-md-4">
+                                <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
+                                    <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
+                                    <div class="text">
+                                        <span class="date">${categoryName}</span>
+                                        <h2>${product.title}</h2>
+                                    </div>
+                                </a>
+                            </div>
+                        `;
                 $('#userProductsContainer').append(productHTML);
             });
 
             // Hiển thị tất cả sản phẩm
-            allCurrentItems.forEach(function (product) {
+            allProducts.forEach(function (product) {
                 var categoryName = getCategoryName(product.categoryId);
                 var productHTML = `
-                        <div class="col-md-4">
-                            <a href="/Home/single?slug=${product.slug}" class="h-entry mb-30 v-height gradient">
-                                <div class="featured-img" style="background-image: url('${product.imageUrl}');"></div>
-                                <div class="text">
-                                    <span class="date">${categoryName}</span>
-                                    <h2>${product.title}</h2>
-                                </div>
-                            </a>
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <a href="/Home/single?slug=${product.slug}">
+                            <img class="card-img-top" src="${product.imageUrl}" alt="${product.title}">
+                        </a>
+                        <div class="card-body">
+                            <a href="/Home/single?slug=${product.slug}" class="card-title h5">${product.title}</a>
+                                <p class="text-muted">${categoryName} </p>
+                            <div class="d-flex align-items-center">
+                                <img src="${product.avatarUrl}" alt="Avatar" width="50" height="50" class="rounded-circle mr-2">
+                                <span class="card-text"> Tác Giả: ${product.firstName} </span>
+                                    
+                            </div>
                         </div>
-                    `;
+                    </div>
+                </div>
+            `;
                 $('#allProductsContainer').append(productHTML);
             });
+
+
+
 
             // Hàm lấy tên danh mục từ id danh mục
             function getCategoryName(categoryId) {
@@ -142,15 +217,8 @@
 
             // Cập nhật trang hiện tại và nút Previous/Next cho user products
             $('#userCurrentPage').text('Trang ' + userCurrentPage);
-            $('#userPrevPage').prop('disabled', userCurrentPage === 1);
             $('#userNextPage').prop('disabled', userCurrentPage === Math.ceil(userProducts.length / itemsPerPage));
-
-            // Cập nhật trang hiện tại và nút Previous/Next cho all products
-            $('#allCurrentPage').text('Trang ' + allCurrentPage);
-            $('#allPrevPage').prop('disabled', allCurrentPage === 1);
-            $('#allNextPage').prop('disabled', allCurrentPage === Math.ceil(allProducts.length / itemsPerPage));
         }
-
         // Hàm lấy sản phẩm trên trang hiện tại
         function getCurrentPageItems(products, currentPage) {
             var startIndex = (currentPage - 1) * itemsPerPage;
@@ -170,22 +238,6 @@
         $('#userNextPage').click(function () {
             if (userCurrentPage < Math.ceil(userProducts.length / itemsPerPage)) {
                 userCurrentPage++;
-                updateUI();
-            }
-        });
-
-        // Xử lý khi click vào nút Previous của all products
-        $('#allPrevPage').click(function () {
-            if (allCurrentPage > 1) {
-                allCurrentPage--;
-                updateUI();
-            }
-        });
-
-        // Xử lý khi click vào nút Next của all products
-        $('#allNextPage').click(function () {
-            if (allCurrentPage < Math.ceil(allProducts.length / itemsPerPage)) {
-                allCurrentPage++;
                 updateUI();
             }
         });

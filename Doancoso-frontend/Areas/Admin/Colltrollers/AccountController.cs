@@ -13,5 +13,9 @@ namespace Doancoso_frontend.Areas.Admin.Controllers
         {
             return View();
         }
+        public IActionResult Page403()
+        {
+            return View();
+        }
     }
 }

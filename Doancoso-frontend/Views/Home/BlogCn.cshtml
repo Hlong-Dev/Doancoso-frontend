@@ -22,6 +22,7 @@
         .post-entry-sidebar ul li a img, .post-entry-footer ul li a img {
             width: 250px;
         }
+
         .product-info {
             width: -webkit-fill-available; /* Đặt kích thước cố định cho phần product-info */
             overflow: hidden; /* Ẩn nội dung vượt ra ngoài */
@@ -43,6 +44,7 @@
         .dash {
             color: #b3b3b3;
         }
+
         .category-reading-time {
             width: 474px;
             display: -webkit-inline-box;
@@ -50,25 +52,26 @@
 
         .fa-ellipsis-v:before {
             content: "\f142";
-         
             margin-left: 10px;
         }
+
         .username {
             margin-left: 9px;
             font-weight: 600;
-            color: black;/* Đặt margin bên trái của tên người dùng */
+            color: black; /* Đặt margin bên trái của tên người dùng */
         }
+
         .avatar-img {
             width: 2.5rem; /* Kích thước của khung hình */
             height: 2.5rem;
             border-radius: 50%; /* Tạo khung hình tròn */
             object-fit: cover; /* Hình ảnh vừa với kích thước của khung hình */
         }
+
         .titleLink {
-           
             margin-top: 10px;
             max-width: 500px;
-            overflow: hidden;       
+            overflow: hidden;
             margin-bottom: 5px; /* Khoảng cách dưới của title */
             font-weight: 600; /* In đậm title */
             font-size: 20px; /* Kích thước font nhỏ hơn */
@@ -84,20 +87,20 @@
             color: black;
         }
 
-            /* Định dạng text trong title */
-         
+        /* Định dạng text trong title */
+
 
         .posts-entry .blog-entry-search-item .img-link {
             width: 300px;
-            height: 170px; 
-            overflow: hidden; 
+            height: 170px;
+            overflow: hidden;
         }
 
             .posts-entry .blog-entry-search-item .img-link img {
                 width: 100%;
-                height: 100%; 
+                height: 100%;
                 object-fit: cover;
-                object-position: center; 
+                object-position: center;
                 border-radius: 0;
             }
 
@@ -135,6 +138,7 @@
             border-bottom: 1px solid #e6e6e6;
             font-weight: 600;
         }
+
         .popular-post img {
             width: 250px;
         }
@@ -143,6 +147,7 @@
                 width: 50px; /* hoặc kích thước mong muốn cho avatar */
                 height: 50px; /* hoặc kích thước mong muốn cho avatar */
             }
+
         .sidebar-box {
             border: 1px solid #ebeef5; /* Thiết lập độ rộng và màu sắc của viền */
             padding: 20px; /* Thêm padding để tạo khoảng cách giữa nội dung và viền */
@@ -160,12 +165,12 @@
         <div class="container">
             <div class="row align-items-center justify-content-center text-center pt-5">
                 <div class="col-lg-6">
-                    <h1 class="heading text-white mb-3" data-aos="fade-up">BÀI VIẾT MỚI NHẤT</h1>
+                    <h1 class="heading text-white mb-3" data-aos="fade-up">PHÁT TRIỂN BẢN THÂN</h1>
                 </div>
             </div>
         </div>
     </div>
- 
+
 
     <div class="section search-result-wrap">
         <div class="container">
@@ -173,9 +178,9 @@
             <div class="row posts-entry">
                 <div class="col-lg-8" id="productsContainer">
                     <!-- Sẽ thêm các sản phẩm vào đây -->
-                </div>              
+                </div>
                 <div class="col-lg-4 sidebar">
-                    
+
                     <div class="sidebar-box">
                         <h3 class="heading">Danh Mục Blog</h3>
                         <ul class="categories"></ul>
@@ -185,7 +190,6 @@
                         <h3 class="heading">CŨ NHƯNG CHẤT</h3>
                         <div class="post-entry-sidebar">
                             <ul>
-                                
                             </ul>
                         </div>
                     </div>
@@ -229,8 +233,8 @@
     </div>
     @Html.Partial("_FooterPartial")
 
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-   <script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
         $(document).ready(function () {
             var currentPage = 1; // Current page number
             var itemsPerPage = 7; // Number of items per page
@@ -268,7 +272,8 @@
                 } else {
                     // Fetch all products if no search keyword
                     $.get('http://localhost:5233/api/Products', function (data) {
-                        allProductsOriginal = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        allProductsOriginal = data.filter(product => product.categoryId === 3).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
                         allProducts = [...allProductsOriginal];
                         totalPages = Math.ceil(allProducts.length / itemsPerPage);
                         updateUI();
@@ -276,7 +281,7 @@
                 }
 
                 // Fetch the list of blog posts
-              
+
                 // Fetch the list of saved blog posts
                 $.get('http://localhost:5233/api/Products/saved', function (savedBlogs) {
                     savedBlogIds = savedBlogs.map(blog => blog.blogId);
@@ -337,7 +342,7 @@
                     // Gộp các phần tử vào mục "Popular Post"
                     popularPost.append(postLink);
                     popularPost.append(categoryReadingTimeContainer);
-                   
+
 
                     popularPost.append(avatarImg);
                     popularPost.append(userNameElement);
@@ -541,7 +546,7 @@
                 });
             }
 
-            
+
             $(document).ready(function () {
                 var isDropdownVisible = false; // Biến trạng thái của dropdown menu
 

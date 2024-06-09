@@ -1,5 +1,4 @@
-﻿
-<h1>@ViewData["Title"]</h1>
+﻿<h1>@ViewData["Title"]</h1>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/datatables.min.js"></script>
 <link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
@@ -41,21 +40,19 @@
     .image-container {
         max-width: 700px;
         max-height: 700px;
-        overflow: hidden; /* Đảm bảo ảnh không vượt quá kích thước container */
+        overflow: hidden;
     }
 
-        .image-container img {
-            width: 100%; /* Đảm bảo ảnh chiếm toàn bộ chiều rộng của container */
-            height: auto; /* Đảm bảo tỷ lệ khung hình bảo toàn */
-        }
-
+    .image-container img {
+        width: 100%;
+        height: auto;
+    }
 </style>
 <div class="containerr">
     <input type="file" id="imageInput" accept="image/*">
 
     <form id="editForm">
         <div style="display: none;">
-            <!-- Ẩn trường BlogId -->
             <label for="blogId">BlogId:</label>
             <input type="text" id="blogId" name="blogId" readonly />
         </div>
@@ -64,7 +61,7 @@
             <input type="text" id="title" name="title" />
         </div>
         <div>
-            <label for="title">Mô tả:</label>
+            <label for="description">Mô tả:</label>
             <input type="text" id="description" name="description">
         </div>
         <div>
@@ -76,23 +73,22 @@
             <input id="slug" name="slug">
         </div>
         <div class="hidden">
-            <!-- Ẩn trường CreatedAt -->
-            <label for="userId">CreateDate:</label>
+            <label for="createdAt">CreateDate:</label>
             <input type="text" id="createdAt" name="createdAt" readonly />
         </div>
         <input type="hidden" id="userId" name="userId">
         <div class="hidden">
-            <label for="userName">Tên người dùng:</label>
-            <input type="text" id="username" name="userName" readonly> <!-- ReadOnly -->
+            <label for="username">Tên người dùng:</label>
+            <input type="text" id="username" name="username" readonly>
         </div>
-        <div @* class="hidden" *@>
-            <label for="imageUrl">Ảnh</label>
-            <input type="text" id="imageUrl" name="imageUrl"> <!-- ReadOnly -->
-        </div>
-        <input @* type="hidden" *@ id="avatarUrl" name="avatarUrl">
-        <input @* type="hidden" *@ id="firstName" name="firstName">
         <div>
-            <label for="imageUrl">Ảnh:</label>
+            <label for="imageUrl">Ảnh</label>
+            <input type="text" id="imageUrl" name="imageUrl">
+        </div>
+        <input type="hidden" id="avatarUrl" name="avatarUrl">
+        <input type="hidden" id="firstName" name="firstName">
+        <div>
+            <label for="imagePreview">Ảnh:</label>
             <div class="image-container">
                 <img id="imagePreview" src="" alt="Ảnh">
             </div>
@@ -100,7 +96,6 @@
         <div>
             <label for="category">Category:</label>
             <select id="category" name="category">
-                <!-- Danh sách các category sẽ được thêm vào đây -->
             </select>
         </div>
         <div>
@@ -115,16 +110,13 @@
 </div>
 <script>
     $(document).ready(function () {
-        // Gọi hàm để lấy danh sách category khi trang được tải
         getCategories();
 
-        // Hàm để gửi yêu cầu lấy danh sách category từ server
         function getCategories() {
             $.ajax({
                 url: 'http://localhost:5233/api/Category',
                 type: 'GET',
                 success: function (data) {
-                    // Sau khi nhận được danh sách category, điền vào dropdown
                     populateCategoriesDropdown(data);
                 },
                 error: function (xhr, status, error) {
@@ -133,20 +125,16 @@
             });
         }
 
-       
         function populateCategoriesDropdown(categories) {
             var dropdown = $('#category');
-            // Xóa tất cả các option hiện có trong dropdown
             dropdown.empty();
-            // Thêm một option mặc định
             dropdown.append($('<option>').val('').text('Chọn Category'));
-            // Thêm từng category vào dropdown
             categories.forEach(function (category) {
                 dropdown.append($('<option>').val(category.id).text(category.name));
             });
         }
-
     });
+
     var token = localStorage.getItem('token');
     var userId, username, firstName, avatarUrl;
     if (token) {
@@ -162,13 +150,11 @@
         $('#avatarUrl').val(avatarUrl);
     }
     $('#imageInput').change(function () {
-        uploadImage(); // Gọi hàm uploadImage() khi có thay đổi trong input file
+        uploadImage();
     });
 
-    // Lấy thông tin blog khi trang được tải
     fetchBlogDetails();
 
-    // Initialize CKEditor for the content textarea
     CKEDITOR.replace('content');
 
     function fetchBlogDetails() {
@@ -187,7 +173,6 @@
             $('#imagePreview').attr('src', data.imageUrl);
             $('#isPublic').val(data.isPublic ? 'true' : 'false');
 
-            // Thay thế các trường lấy từ database bằng các trường phân giải từ token
             $('#userId').val(userId);
             $('#username').val(username);
             $('#firstName').val(firstName);
@@ -197,40 +182,37 @@
             if (token) {
                 var tokenPayload = JSON.parse(atob(token.split('.')[1]));
                 var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+                var roles = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-                // Kiểm tra xem user ID của người dùng hiện tại có khớp với user ID của blog không
-                if (currentUserId !== data.userId) {
+                if (roles.indexOf('customer') === -1 && currentUserId !== data.userId) {
                     alert('Bạn không có quyền chỉnh sửa blog này.');
-                    window.location.href = 'http://localhost:5236/Home/Index'; // Redirect to home page
+                    window.location.href = 'http://localhost:5236/Home/Index';
                 }
             } else {
-                // Nếu không có token, chuyển hướng đến trang đăng nhập hoặc xử lý tùy ý
                 window.location.href = 'http://localhost:5236/Account/Login';
             }
         });
     }
 
-   
     function updateBlog() {
-        var userId = $('#userId').val(); // Lấy userId từ form
-        var token = localStorage.getItem('token'); // Lấy token từ localStorage
+        var userId = $('#userId').val();
+        var token = localStorage.getItem('token');
         if (token) {
             var tokenPayload = JSON.parse(atob(token.split('.')[1]));
             var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            var roles = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-            // Kiểm tra xem userId của người dùng hiện tại có khớp với userId từ form không
-            if (userId !== currentUserId) {
+            if (roles.indexOf('customer') === -1 && userId !== currentUserId) {
                 alert('Bạn không có quyền chỉnh sửa blog này.');
-                window.location.href = 'http://localhost:5236/Home/Index'; // Redirect to another page
-                return; // Dừng hàm ở đây nếu userId không khớp
+                window.location.href = 'http://localhost:5236/Home/Index';
+                return;
             }
         } else {
-            alert('Bạn phải đăng nhập để chỉnh sửa blog.'); // Thông báo nếu không có token
-            window.location.href = 'http://localhost:5236/Account/Login'; // Redirect to login page
-            return; // Dừng hàm ở đây nếu không có token
+            alert('Bạn phải đăng nhập để chỉnh sửa blog.');
+            window.location.href = 'http://localhost:5236/Account/Login';
+            return;
         }
 
-        // Tiếp tục thực hiện cập nhật blog nếu userId khớp
         var blogId = $('#blogId').val();
         var slug = $('#slug').val();
         var title = $('#title').val();
@@ -258,7 +240,6 @@
             avatarUrl: avatarUrl,
             categoryId: categoryId,
             isPublic: isPublic
-
         };
 
         $.ajax({
@@ -275,6 +256,7 @@
             }
         });
     }
+
     function uploadImage() {
         const fileInput = document.getElementById('imageInput');
         const file = fileInput.files[0];
@@ -304,16 +286,9 @@
             }
         });
     }
+
     $(document).ready(function () {
-        // Fetch blog details when the page loads
         fetchBlogDetails();
-
-        // Initialize CKEditor for the content textarea
         CKEDITOR.replace('content');
-
-        // Check if userId matches the current user's ID
-
     });
-
-
 </script>

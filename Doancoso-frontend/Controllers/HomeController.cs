@@ -38,15 +38,32 @@ namespace Doancoso_frontend.Controllers
         {
             return View();
         }
-        
+        public IActionResult BlogTc()
+        {
+            return View();
+        }
+        public IActionResult BlogKh()
+        {
+            return View();
+        }
         public IActionResult Single()
         {
             return View();
         }
+        public IActionResult BlogCt()
+        {
+            return View();
+        }
+        public IActionResult BlogCn()
+        {
+            return View();
+        }
+      
         public IActionResult UpdateImage()
         {
             return View();
         }
+
         public IActionResult Blog()
         {
             return View();

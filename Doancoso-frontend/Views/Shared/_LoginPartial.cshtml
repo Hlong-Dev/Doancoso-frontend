@@ -257,15 +257,15 @@
             window.location.href = 'http://localhost:5236/Home/Create';
         }
         // Ngăn chọn văn bản trên trang
-        document.addEventListener('selectstart', function (e) {
-            e.preventDefault();
-        });
+        // document.addEventListener('selectstart', function (e) {
+        //     e.preventDefault();
+        // });
 
-        // Ngăn chặn thực hiện hành động sao chép
-        document.addEventListener('copy', function (e) {
-            e.clipboardData.setData('text/plain', 'Sao chép đã bị vô hiệu hóa.');
-            e.preventDefault();
-        });
+        // // Ngăn chặn thực hiện hành động sao chép
+        // document.addEventListener('copy', function (e) {
+        //     e.clipboardData.setData('text/plain', 'Sao chép đã bị vô hiệu hóa.');
+        //     e.preventDefault();
+        // });
 
     </script>
 </body>

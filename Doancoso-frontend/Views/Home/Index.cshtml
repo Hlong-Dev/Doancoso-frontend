@@ -73,6 +73,7 @@
             margin-top: auto;
         }
 </style>
+<div id="notification-popup-container"></div>
 <section class="section bg-light">
     <div class="container">
         <div class="col-md-12">
@@ -134,7 +135,7 @@
         function fetchProducts() {
             $.get('http://localhost:5233/api/Products', function (data) {
                 userProducts = data.filter(function (product) {
-                    return product.userId === currentUser.userId;
+                    return product.id === currentUser.userId;
                 }).sort(function (a, b) {
                     return new Date(b.createdAt) - new Date(a.createdAt);
                 });

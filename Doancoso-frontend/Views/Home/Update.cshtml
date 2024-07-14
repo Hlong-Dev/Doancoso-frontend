@@ -2,7 +2,7 @@
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/js/datatables.min.js"></script>
 <link href="~/css/datatables.datatables.min.css" rel="stylesheet" />
-<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/35.3.0/classic/ckeditor.js"></script>
 <style>
     .containerr {
         max-width: 1120px;
@@ -43,19 +43,17 @@
         overflow: hidden;
     }
 
-    .image-container img {
-        width: 100%;
-        height: auto;
-    }
+        .image-container img {
+            width: 100%;
+            height: auto;
+        }
 </style>
+<div id="notification-popup-container"></div>
 <div class="containerr">
     <input type="file" id="imageInput" accept="image/*">
 
     <form id="editForm">
-        <div style="display: none;">
-            <label for="blogId">BlogId:</label>
-            <input type="text" id="blogId" name="blogId" readonly />
-        </div>
+
         <div>
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" />
@@ -76,7 +74,7 @@
             <label for="createdAt">CreateDate:</label>
             <input type="text" id="createdAt" name="createdAt" readonly />
         </div>
-        <input type="hidden" id="userId" name="userId">
+        <input type="hidden" id="id" name="userId">
         <div class="hidden">
             <label for="username">Tên người dùng:</label>
             <input type="text" id="username" name="username" readonly>
@@ -109,8 +107,18 @@
     </form>
 </div>
 <script>
+    let editorInstance;
     $(document).ready(function () {
         getCategories();
+        fetchBlogDetails();
+        ClassicEditor
+            .create(document.querySelector('#content'))
+            .then(editor => {
+                editorInstance = editor;
+            })
+            .catch(error => {
+                console.error(error);
+            });
 
         function getCategories() {
             $.ajax({
@@ -130,17 +138,17 @@
             dropdown.empty();
             dropdown.append($('<option>').val('').text('Chọn Category'));
             categories.forEach(function (category) {
-                dropdown.append($('<option>').val(category.id).text(category.name));
+                dropdown.append($('<option>').val(category.slug).text(category.name));
             });
         }
     });
 
     var token = localStorage.getItem('token');
-    var userId, username, firstName, avatarUrl;
+    var id, username, firstName, avatarUrl;
     if (token) {
         var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-        $('#userId').val(userId);
+        id = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+        $('#id').val(id);
 
         username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
         $('#username').val(username);
@@ -153,27 +161,22 @@
         uploadImage();
     });
 
-    fetchBlogDetails();
-
-    CKEDITOR.replace('content');
-
     function fetchBlogDetails() {
         var urlParams = new URLSearchParams(window.location.search);
         var slug = urlParams.get('slug');
 
         $.get('http://localhost:5233/api/Products/' + slug, function (data) {
-            $('#blogId').val(data.blogId);
             $('#slug').val(data.slug);
             $('#title').val(data.title);
             $('#description').val(data.description);
-            CKEDITOR.instances.content.setData(data.content);
+            editorInstance.setData(data.content);
             $('#createdAt').val(data.createdAt);
             $('#imageUrl').val(data.imageUrl);
-            $('#category').val(data.categoryId);
+            $('#category').val(data.categorySlug);
             $('#imagePreview').attr('src', data.imageUrl);
             $('#isPublic').val(data.isPublic ? 'true' : 'false');
 
-            $('#userId').val(userId);
+            $('#id').val(id);
             $('#username').val(username);
             $('#firstName').val(firstName);
             $('#avatarUrl').val(avatarUrl);
@@ -181,10 +184,10 @@
             var token = localStorage.getItem('token');
             if (token) {
                 var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-                var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+                var currentId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
                 var roles = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-                if (roles.indexOf('customer') === -1 && currentUserId !== data.userId) {
+                if (roles.indexOf('customer') === -1 && currentId !== data.id) {
                     alert('Bạn không có quyền chỉnh sửa blog này.');
                     window.location.href = 'http://localhost:5236/Home/Index';
                 }
@@ -195,14 +198,14 @@
     }
 
     function updateBlog() {
-        var userId = $('#userId').val();
+        var id = $('#id').val();
         var token = localStorage.getItem('token');
         if (token) {
             var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-            var currentUserId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            var currentId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
             var roles = tokenPayload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
 
-            if (roles.indexOf('customer') === -1 && userId !== currentUserId) {
+            if (roles.indexOf('customer') === -1 && id !== currentId) {
                 alert('Bạn không có quyền chỉnh sửa blog này.');
                 window.location.href = 'http://localhost:5236/Home/Index';
                 return;
@@ -213,32 +216,30 @@
             return;
         }
 
-        var blogId = $('#blogId').val();
         var slug = $('#slug').val();
         var title = $('#title').val();
         var description = $('#description').val();
-        var content = CKEDITOR.instances.content.getData();
+        var content = editorInstance.getData();
         var createdAt = $('#createdAt').val();
         var userName = $('#username').val();
         var firstName = $('#firstName').val();
         var imageUrl = $('#imageUrl').val();
         var avatarUrl = $('#avatarUrl').val();
-        var categoryId = $('#category').val();
+        var categorySlug = $('#category').val();
         var isPublic = $('#isPublic').val() === "true";
 
         var updatedData = {
-            blogId: blogId,
             slug: slug,
             title: title,
             description: description,
             content: content,
             createdAt: createdAt,
-            userId: userId,
+            id: id,
             userName: userName,
             firstName: firstName,
             imageUrl: imageUrl,
             avatarUrl: avatarUrl,
-            categoryId: categoryId,
+            categorySlug: categorySlug,
             isPublic: isPublic
         };
 
@@ -286,9 +287,4 @@
             }
         });
     }
-
-    $(document).ready(function () {
-        fetchBlogDetails();
-        CKEDITOR.replace('content');
-    });
 </script>

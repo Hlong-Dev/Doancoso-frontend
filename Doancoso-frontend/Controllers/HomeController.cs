@@ -63,7 +63,10 @@ namespace Doancoso_frontend.Controllers
         {
             return View();
         }
-
+        public IActionResult Websocket()
+        {
+            return View();
+        }
         public IActionResult Blog()
         {
             return View();

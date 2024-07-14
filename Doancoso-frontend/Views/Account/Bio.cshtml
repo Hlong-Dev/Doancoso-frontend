@@ -158,6 +158,7 @@
     </style>
 </head>
 <body>
+    <div id="notification-popup-container"></div>
     <main>
         <aside>
             <div class="profile-summary"> 
@@ -271,6 +272,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         var categoriesMap = {};
+
         $(document).ready(function () {
             var token = localStorage.getItem('token');
             var headers = {};
@@ -382,27 +384,19 @@
         }
 
         function fetchUserPosts(userId, headers) {
-            var urlPublic = "http://localhost:5233/api/Products";
+            var url = "http://localhost:5233/api/Products/private/" + userId;
+
             $.ajax({
-                url: urlPublic,
+                url: url,
                 method: 'GET',
                 headers: headers,
-                success: function (publicBlogs) {
-                    var userPublicBlogs = publicBlogs.filter(blog => blog.userId === userId);
-
-                    // Fetch private posts
-                    $.ajax({
-                        url: "http://localhost:5233/api/Products/private/" + userId,
-                        method: 'GET',
-                        headers: headers,
-                        success: function (privateBlogs) {
-                            var allBlogs = userPublicBlogs.concat(privateBlogs);
-                            var totalPosts = allBlogs.length;
-                            $('#userPostsTab').text('Bài viết (' + totalPosts + ')');
-
-                            displayPosts(allBlogs);
-                        }
-                    });
+                success: function (blogs) {
+                    var totalPosts = blogs.length;
+                    $('#userPostsTab').text('Bài viết (' + totalPosts + ')');
+                    displayPosts(blogs);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Lỗi khi lấy bài viết:', error);
                 }
             });
         }
@@ -413,11 +407,11 @@
 
             followers.forEach(follower => {
                 const followerElement = $(`
-                            <div class="follower">
-                                <img src="${follower.avatarUrl}" alt="Avatar">
-                                <span>${follower.fullName}</span>
-                            </div>
-                        `);
+                        <div class="follower">
+                            <img src="${follower.avatarUrl}" alt="Avatar">
+                            <span>${follower.fullName}</span>
+                        </div>
+                    `);
 
                 followerElement.on('click', function () {
                     window.location.href = `userProfile.html?userId=${follower.userId}`;
@@ -433,11 +427,11 @@
 
             following.forEach(user => {
                 const followingElement = $(`
-                            <div class="following">
-                                <img src="${user.avatarUrl}" alt="Avatar">
-                                <span>${user.fullName}</span>
-                            </div>
-                        `);
+                        <div class="following">
+                            <img src="${user.avatarUrl}" alt="Avatar">
+                            <span>${user.fullName}</span>
+                        </div>
+                    `);
 
                 followingElement.on('click', function () {
                     window.location.href = `userProfile.html?userId=${user.userId}`;
@@ -454,25 +448,25 @@
             blogs.forEach(function (blog) {
                 var categoryName = categoriesMap[blog.categoryId] || 'General'; // Get category name
                 var postHtml = `
-                            <div class="post">
-                                <img src="https://i.imgur.com/9Q8962w.png" alt="Post Image">
-                                <div class="post-info">
-                                    <h3>${categoryName}</h3>
-                                    <h2>${truncateText(blog.title, 100)}</h2>
-                                    <p>${truncateText(blog.description, 100)}...</p>
-                                    <div class="post-stats">
-                                        <span>${blog.likes || 0} likes</span>
-                                        <span>${blog.comments || 0} comments</span>
-                                    </div>
-                                </div>
-                                <div class="options-icon fas fa-ellipsis-v" onclick="toggleMenu(this)"></div>
-                                <div class="menu">
-                                    <div class="menu-item" onclick="viewFullContent('${blog.slug}')">Xem chi tiết</div>
-                                    <div class="menu-item" onclick="editItem('${blog.slug}')">Update</div>
-                                    <div class="menu-item" onclick="deleteItem(${blog.blogId})">Delete</div>
+                        <div class="post">
+                            <img src="https://i.imgur.com/9Q8962w.png" alt="Post Image">
+                            <div class="post-info">
+                                <h3>${categoryName}</h3>
+                                <h2>${truncateText(blog.title, 100)}</h2>
+                                <p>${truncateText(blog.description, 100)}...</p>
+                                <div class="post-stats">
+                                    <span>${blog.likes || 0} likes</span>
+                                    <span>${blog.comments || 0} comments</span>
                                 </div>
                             </div>
-                        `;
+                            <div class="options-icon fas fa-ellipsis-v" onclick="toggleMenu(this)"></div>
+                            <div class="menu">
+                                <div class="menu-item" onclick="viewFullContent('${blog.slug}')">Xem chi tiết</div>
+                                <div class="menu-item" onclick="editItem('${blog.slug}')">Update</div>
+                                <div class="menu-item" onclick="deleteItem('${blog.slug}')">Delete</div>
+                            </div>
+                        </div>
+                    `;
                 userPostsContainer.append(postHtml);
             });
         }
@@ -515,7 +509,6 @@
             userList.empty();
             var listHtml = '<ul class="user-list">';
             users.forEach(function (user) {
-                console.log('User:', user); // Debug: log user data to ensure userId is present
                 var avatarLink = `<img src="${user.avatarUrl}" alt="Avatar" width="50" height="50" onclick="showUserModal('${user.avatarUrl}', '${user.userName}', '${user.firstName}', '${user.id}')">`;
                 listHtml += `
                         <li>
@@ -550,10 +543,11 @@
             window.location.href = 'http://localhost:5236/Home/Update?slug=' + slug;
         }
 
-        function deleteItem(id) {
+
+        function deleteItem(slug) {
             if (confirm("Are you sure you want to delete this item?")) {
                 $.ajax({
-                    url: 'http://localhost:5233/api/Products/' + id,
+                    url: 'http://localhost:5233/api/Products/' + slug,
                     method: 'DELETE',
                     success: function () {
                         alert('Item deleted successfully.');

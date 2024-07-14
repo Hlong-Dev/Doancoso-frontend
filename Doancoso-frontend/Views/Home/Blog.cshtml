@@ -6,6 +6,7 @@
     <title>@ViewData["Title"]</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+   
     <style>
 
         .notification {
@@ -152,10 +153,11 @@
         /* Để thêm các kiểu viền khác nhau hoặc hiệu ứng, bạn có thể sử dụng các thuộc tính CSS khác như box-shadow, border-style, v.v. */
 
     </style>
+  
 </head>
 <body>
     <div id="notification" class="notification"></div>
-
+    <div id="notification-popup-container"></div>
     <div class="hero overlay inner-page bg-primary py-5">
         <div class="container">
             <div class="row align-items-center justify-content-center text-center pt-5">
@@ -235,7 +237,7 @@
             var currentPage = 1; // Current page number
             var itemsPerPage = 7; // Number of items per page
             var allProducts = []; // List of all blog posts
-            var savedBlogIds = []; // List of saved blog post IDs
+            var savedBlogSlugs = [];  // List of saved blog post IDs
             var userId = ''; // User ID
             var categoriesMap = {}; // Map of categories
             var allProductsOriginal = []; // Original list of all blog posts
@@ -273,15 +275,12 @@
                         totalPages = Math.ceil(allProducts.length / itemsPerPage);
                         updateUI();
                     });
-                }
-
-                // Fetch the list of blog posts
-              
-                // Fetch the list of saved blog posts
+                }          
                 $.get('http://localhost:5233/api/Products/saved', function (savedBlogs) {
-                    savedBlogIds = savedBlogs.map(blog => blog.blogId);
-                    updateUI();
+                    savedBlogSlugs = savedBlogs.map(blog => blog.slug); // Lấy danh sách slug đã lưu
+                    updateUI(); // Cập nhật lại giao diện người dùng sau khi nhận được danh sách đã lưu
                 });
+
 
                 // Fetch the list of categories
                 $.get('http://localhost:5233/api/Category', function (response) {
@@ -328,8 +327,8 @@
                     categoryReadingTimeContainer.append(categoryElement, readingTimeElement);
 
                     // Tạo phần tử lưu bài viết
-                    var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', post.blogId);
-                    saveIcon.addClass(savedBlogIds.includes(post.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
+                    var saveIcon = $('<i class="save-icon"></i>').attr('data-slug', post.blogId);
+                    saveIcon.addClass(savedBlogSlugs.includes(post.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
 
                     // Tạo phần tử options icon
                     var optionsIcon = $('<i class="options-icon fas fa-ellipsis-v"></i>').attr('data-user-id', post.userId);
@@ -428,8 +427,8 @@
                     var imageElement = $('<img src="" alt="Image" class="img-fluid">').attr('src', product.imageUrl);
                     imageLink.append(imageElement);
 
-                    var saveIcon = $('<i class="save-icon"></i>').attr('data-blog-id', product.blogId);
-                    saveIcon.addClass(savedBlogIds.includes(product.blogId) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
+                    var saveIcon = $('<i class="save-icon"></i>').attr('data-slug', product.slug);
+                    saveIcon.addClass(savedBlogSlugs.includes(product.slug) ? 'fa fa-bookmark saved' : 'far fa-bookmark');
 
                     var optionsIcon = $('<i class="options-icon fas fa-ellipsis-v"></i>').attr('data-user-id', product.userId);
 
@@ -610,7 +609,7 @@
             $(document).on('click', '.save-icon', function (event) {
                 event.preventDefault();
                 var saveIcon = $(this);
-                var blogId = saveIcon.attr('data-blog-id');
+                var slug = saveIcon.attr('data-slug');
                 var isSaved = saveIcon.hasClass('saved');
 
                 if (isSaved) {
@@ -623,7 +622,7 @@
                 $.ajax({
                     type: 'POST',
                     url: 'http://localhost:5233/api/Products/saved',
-                    data: JSON.stringify({ blogId: blogId }),
+                    data: JSON.stringify({ slug: slug }),
                     contentType: 'application/json',
                     success: function () { },
                     error: function (xhr, status, error) {
@@ -660,5 +659,6 @@
             }
         });
     </script>
+  
 </body>
 </html>

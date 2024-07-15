@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .notificationa-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notificationa-icon {
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+            background-color: #CCD0D5;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .notificationa-icon .badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                padding: 5px 10px;
+                border-radius: 50%;
+                background-color: red;
+                color: white;
+                font-size: 12px;
+            }
+
+        .notificationsa-dropdown {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            width: 360px;
+            max-height: 643px;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            right: -76px;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+            .notificationsa-dropdown .notificationa {
+                display: flex;
+                align-items: center;
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+            }
+
+                .notificationsa-dropdown .notificationa:hover {
+                    background-color: #e9e9e9;
+                }
+
+                .notificationsa-dropdown .notificationa img {
+                    border-radius: 50%;
+                    margin-right: 10px;
+                }
+
+            .notificationsa-dropdown .notificationa-text {
+                flex-grow: 1;
+            }
+    </style>
+</head>
+<body>
+    <div class="notificationa-container">
+        <div class="notificationa-icon" id="notificationIcon" onclick="toggleNotificationaDropdown()">
+            <i class="fas fa-bell"></i>
+            <span class="badge" id="notificationaBadge">0</span>
+        </div>
+        <div class="notificationsa-dropdown" id="notificationsaDropdown">
+            <!-- Notifications will be prepended here -->
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="text/javascript">
+        const notificationaIcon = document.getElementById('notificationaIcon');
+        const notificationsaDropdown = document.getElementById('notificationsaDropdown');
+        const notificationBadge = document.getElementById('notificationaBadge');
+
+        function toggleNotificationaDropdown() {
+            const isDisplayed = notificationsaDropdown.style.display === 'block';
+            notificationsaDropdown.style.display = isDisplayed ? 'none' : 'block';
+        }
+
+        function displayNotificationa(message, slug) {
+            const newNotificationa = document.createElement('div');
+            newNotificationa.className = 'notificationa';
+            newNotificationa.innerHTML = `
+                        <img src="path/to/icon.png" alt="User Icon" width="40" height="40">
+                        <div class="notificationa-text">${message}</div>
+                    `;
+            newNotificationa.onclick = function () {
+                window.location.href = `http://localhost:5236/Home/single?slug=${slug}`;
+            };
+            notificationsaDropdown.prepend(newNotificationa); // Prepend the new notification
+        }
+
+        function fetchNotificationsa(userId) {
+            $.ajax({
+                url: "http://localhost:5233/api/Products/noti/" + userId,
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem('token')
+                },
+                success: function (data) {
+                    data.forEach(notificationa => displayNotificationa(notificationa.message, notificationa.slug));
+                    notificationaBadge.textContent = data.length;
+                },
+                error: function (error) {
+                    console.error("Error fetching notifications: ", error);
+                }
+            });
+        }
+
+        (function initializeNotifications() {
+            const token = localStorage.getItem('token');
+            const tokenPayload = decodeJwt(token);
+            const userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            fetchNotificationsa(userId);
+        })();
+
+        function decodeJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                console.error("Error decoding JWT token: ", error);
+                return {};
+            }
+        }
+    </script>
+</body>
+</html>

@@ -29,11 +29,69 @@
     <link rel="stylesheet" href="~/css/aos.css">
     <link rel="stylesheet" href="~/css/glightbox.min.css">
     <link rel="stylesheet" href="~/css/style.css">
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="~/js/notifications.js"></script>
     <link rel="stylesheet" href="css/flatpickr.min.css">
     <link rel="icon" type="image/png" href="~/images/screenshot 2024-05-07 102320.png">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <title>Blogy - Mạng Xã Hội Chia sẻ Quan Điểm - Kiến Thức Hàng Đầu Việt Nam</title>
+    <style>
+        .c {
+            width: 53px;
+        }
+        #notifications {
+            margin-top: 20px;
+        }
+
+        .notification {
+            display: flex;
+            align-items: center;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            .notification:hover {
+                background-color: #e9e9e9;
+            }
+
+            .notification img {
+                border-radius: 50%;
+                margin-right: 10px;
+            }
+
+        .notification-text {
+            flex-grow: 1;
+        }
+
+        #notification-popup-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .notification-popup {
+            border: 1px solid #ddd;
+            background-color: #0C2F40;
+            color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+            .notification-popup:hover {
+                opacity: 0.9;
+            }
+    </style>
     <style>
         /* a:not([href]):not([class]), a:not([href]):not([class]):hover {
                     color: black;
@@ -153,7 +211,7 @@
                         <div class="col-3">
                             <a href="index.html" class="logo m-0 float-start">Blogy<span class="text-primary">.</span></a>
                         </div>
-                        <div class="col-6 text-center">
+                        <div class="col-5 text-center">
 
 
                             <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
@@ -198,6 +256,9 @@
                         </div>
 
 
+                        <div class="c">
+                            <partial name="_notipartial" />
+                        </div>
                         <div class="col-1 d-none d-lg-block">
                             <partial name="_LoginPartial" />
                         </div>

@@ -52,6 +52,7 @@
     </style>
 </head>
 <body>
+    <div id="notification-popup-container"></div>
     <div class="containerr">
         <input type="file" id="imageInput" accept="image/*">
       
@@ -92,17 +93,20 @@
             <input type="hidden" id="createdAt" name="createdAt">
             <input type="hidden" id="avatarUrl" name="avatarUrl">
             <input type="hidden" id="firstName" name="firstName">
-            <input type="hidden" id="userId" name="userId">
+            <input type="hidden" id="id" name="id">
             <input type="hidden" id="username" name="username">
             <input type="hidden" id="isPublic" name="isPublic">
             <button type="submit">Thêm Blog</button>
         </form>
     </div>
-    
-    <script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+
+    <script src="https://cdn.ckeditor.com/ckeditor5/35.3.0/classic/ckeditor.js"></script>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         $(document).ready(function () {
+            var editorInstance; // Khai báo biến editorInstance ở đây để có thể truy cập từ bên ngoài
+
             // Gọi hàm để lấy danh sách category khi trang được tải
             getCategories();
 
@@ -121,7 +125,6 @@
                 });
             }
 
-           
             function populateCategoriesDropdown(categories) {
                 var dropdown = $('#category');
                 // Xóa tất cả các option hiện có trong dropdown
@@ -134,12 +137,18 @@
                 });
             }
 
-        });
-
-        $(document).ready(function () {
-            CKEDITOR.replace('content', {
-                height: '1000px'
-            });
+            ClassicEditor
+                .create(document.querySelector('#content'), {
+                    toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote'],
+                    language: 'vi',
+                })
+                .then(editor => {
+                    // Gán editor instance vào biến editorInstance để sử dụng ở đâu đó trong mã của bạn
+                    editorInstance = editor;
+                })
+                .catch(error => {
+                    console.error('Đã xảy ra lỗi khi khởi tạo CKEditor:', error);
+                });
 
             var currentDateTime = new Date().toISOString().slice(0, 16);
             $('#createdAt').val(currentDateTime);
@@ -147,12 +156,12 @@
             var token = localStorage.getItem('token');
             if (token) {
                 var tokenPayload = JSON.parse(atob(token.split('.')[1]));
-                var userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+                var id = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
                 var username = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
                 var firstName = decodeURIComponent(escape(tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"]));
                 var avatarUrl = tokenPayload["AvatarUrl"];
                 $('#avatarUrl').val(avatarUrl);
-                $('#userId').val(userId);
+                $('#id').val(id);
                 $('#username').val(username);
                 $('#firstName').val(firstName);
             }
@@ -167,17 +176,22 @@
                 var title = $('#title').val();
                 var slug = generateSlug(title); // Tạo slug từ tiêu đề
 
+                if (!editorInstance) {
+                    console.error('Không thể lấy dữ liệu từ CKEditor vì editorInstance chưa được khởi tạo.');
+                    return;
+                }
+
                 var formData = {
                     title: title,
                     description: $('#description').val(),
-                    content: CKEDITOR.instances.content.getData(),
+                    content: editorInstance.getData(),
                     createdAt: currentDateTime,
                     avatarUrl: $('#avatarUrl').val(),
                     firstName: $('#firstName').val(),
-                    userId: $('#userId').val(),
+                    id: $('#id').val(),
                     username: $('#username').val(),
                     imageUrl: $('#imageUrl').val(),
-                    categoryId: $('#category').val(),
+                    categorySlug: $('#category').val(),
                     slug: slug, // Sử dụng slug đã tạo
                     isPublic: true,
                 };
@@ -197,53 +211,50 @@
                     }
                 });
             });
-        });
 
-        // Hàm tạo slug từ tiêu đề
-        function removeDiacritics(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f?]/g, "");
-        }
-
-        function generateSlug(title) {
-            var slug = removeDiacritics(title.trim().toLowerCase()).replace(/\s+/g, '-');
-            return slug;
-        }
-
-
-
-
-
-        function uploadImage() {
-            const fileInput = document.getElementById('imageInput');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                alert('Vui lòng chọn một hình ảnh.');
-                return;
+            // Hàm tạo slug từ tiêu đề
+            function removeDiacritics(str) {
+                return str.normalize("NFD").replace(/[\u0300-\u036f?]/g, "");
             }
 
-            const formData = new FormData();
-            formData.append('file', file);
+            function generateSlug(title) {
+                var slug = removeDiacritics(title.trim().toLowerCase()).replace(/\s+/g, '-');
+                return slug;
+            }
 
-            $.ajax({
-                url: 'http://localhost:5233/api/Products/upload',
-                type: 'POST',
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function (data) {
-                    $('#imageUrl').val(data.url);
-                    $('#imagePreview').attr('src', data.url);
-                    $('#imageContainer').show();
-                },
-                error: function (xhr, status, error) {
-                    console.error('Lỗi khi tải lên hình ảnh:', error);
-                    alert('Đã xảy ra lỗi khi tải lên hình ảnh.');
+            function uploadImage() {
+                const fileInput = document.getElementById('imageInput');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    alert('Vui lòng chọn một hình ảnh.');
+                    return;
                 }
-            });
-        }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                $.ajax({
+                    url: 'http://localhost:5233/api/Products/upload',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (data) {
+                        $('#imageUrl').val(data.url);
+                        $('#imagePreview').attr('src', data.url);
+                        $('#imageContainer').show();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Lỗi khi tải lên hình ảnh:', error);
+                        alert('Đã xảy ra lỗi khi tải lên hình ảnh.');
+                    }
+                });
+            }
+        });
 
     </script>
+
 </body>
 </html>
 

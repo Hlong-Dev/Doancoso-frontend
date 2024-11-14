@@ -35,10 +35,51 @@
     <link rel="icon" type="image/png" href="~/images/screenshot 2024-05-07 102320.png">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <title>Blogy - Mạng Xã Hội Chia sẻ Quan Điểm - Kiến Thức Hàng Đầu Việt Nam</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        .icons {
+            display: flex;
+            align-items: center;
+        }
+
+            .icons a {
+                margin: 0 10px;
+                text-decoration: none;
+                color: white;
+            }
+
+                .icons a i {
+                    font-size: 20px;
+                }
+
+
+        .write-button{
+            padding: 10px 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #000;
+            margin-left: 10px;
+        }
+
+        .write-button {
+            background-color: #f9f9f9;
+        }
+    </style>
+    <style>
+        .site-menu a {
+            margin-right: 16px; /* Add space between menu items */
+            text-decoration: none;
+            color: white; /* Change color to white */
+        }
+
+        ul.js-clone-nav.d-none.d-lg-inline-block.text-start.site-menu.mx-auto {
+            margin-top: 21px;
+        }
         .c {
             width: 53px;
         }
+
         #notifications {
             margin-top: 20px;
         }
@@ -94,9 +135,9 @@
     </style>
     <style>
         /* a:not([href]):not([class]), a:not([href]):not([class]):hover {
-                    color: black;
-                    text-decoration: none;
-                } */
+                            color: black;
+                            text-decoration: none;
+                        } */
         .site-nav .site-navigation .site-menu .has-children:hover .dropdown {
             visibility: visible;
             opacity: 1;
@@ -138,6 +179,7 @@
             top: 100%;
             left: 0;
         }
+
         img.autocomplete-image {
             width: 35px;
             height: 35px;
@@ -150,7 +192,7 @@
             overflow-x: hidden;
         }
 
-        .ui-menu-item {
+    /*     .ui-menu-item {
             padding: 8px;
         }
 
@@ -188,6 +230,27 @@
             padding-left: 30px;
             color: #fff;
             width: 130px;
+        } */
+        .search-form .form-control {
+          
+            background-color: #fff;
+            margin-bottom: 0;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            padding-left: 30px;
+            color: #fff;
+            
+        }
+
+        .col-6 {
+            -webkit-box-flex: 0;
+            -ms-flex: 0 0 auto;
+            flex: 0 0 auto;
+            width: 54%;
+        }
+
+        img.cc {
+            width: 40px !important;
+            height: 40px !important;
         }
     </style>
 </head>
@@ -208,67 +271,75 @@
             <div class="menu-bg-wrap">
                 <div class="site-navigation">
                     <div class="row g-0 align-items-center">
-                        <div class="col-3">
-                            <a href="index.html" class="logo m-0 float-start">Blogy<span class="text-primary">.</span></a>
+                        <div class="col-1">
+                            <a href="http://localhost:5236/" class="logo m-0 float-start">Blogy<span class="text-primary">.</span></a>
                         </div>
-                        <div class="col-5 text-center">
-
-
-                            <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
-                                <li class="active"><a asp-area="" asp-controller="Home" asp-action="Index">Trang Chủ</a></li>
-                                
-                                <li>   <a asp-area="" asp-controller="Home" asp-action="Blog">Bài Viết Mới</a></li>
-
-                                <li>   <a asp-area="" asp-controller="Account" asp-action="bio">Blog Của Tôi</a></li>
-                                <li class="has-children">
-                                    <a href="category.html">Danh Sách Blog</a>
-                                    <ul class="dropdown">
-                                        <li><a asp-area="" asp-controller="Home" asp-action="BlogTc">Tài Chính</a></li>
-                                        <li><a asp-area="" asp-controller="Home" asp-action="BlogKh">Khoa Học - Công Nghệ</a></li>
-                                        <li><a asp-area="" asp-controller="Home" asp-action="BlogCn">Phát Triển - Bản Thân</a></li>
-                                        <li><a asp-area="" asp-controller="Home" asp-action="BlogCt">Quan Điểm - Tranh Luận</a></li>
-                                       
-                                        @* <li><a href="contact.html">Contact Us</a></li>
-                                        <li><a href="#">Menu One</a></li>
-                                        <li><a href="#">Menu Two</a></li>
-                                        <li class="has-children">
-                                            <a href="#">Dropdown</a>
-                                            <ul class="dropdown">
-                                                <li><a href="#">Sub Menu One</a></li>
-                                                <li><a href="#">Sub Menu Two</a></li>
-                                                <li><a href="#">Sub Menu Three</a></li>
-                                            </ul>
-                                        </li> *@
-                                    </ul>
-                                <li><a asp-area="" asp-controller="Home" asp-action="Create">Viết Bài</a></li>
-                            </ul>
+                        <div class="col-5">
+                            <div class="icons">
+                                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#"><i class="fab fa-youtube"></i></a>
+                                <a href="#"><i class="fab fa-spotify"></i></a>
+                             
+                            </div>
                         </div>
-                        <div class="col-2 text">
+                    
+                        <div class="col-3 text-end">
                             <a href="#" class="burger ms-auto float-end site-menu-toggle js-menu-toggle d-inline-block d-lg-none light">
                                 <span></span>
                             </a>
-                            <form id="search-form">
-                                <input type="text" id="search-input" placeholder="Bạn đang tìm kiếm blog...">
-
+                            <form id="search-form" class="search-form d-none d-lg-inline-block">
+                                <input type="text" id="search-input" class="form-control" placeholder="Tìm kiếm blog...">
+                                <span class="bi-search"></span>
                             </form>
-
                             <div id="autocomplete-results"></div>
                         </div>
-
-
+                        <div class="col-1">
+                            <a href="http://localhost:5236/Home/Create" class="write-button">
+                                <i class="fas fa-feather-alt"></i> Viết bài
+                            </a>
+                        </div>
+                        <div class="c">
+                            <a href="http://localhost:5236/account/chat" class="write-button">
+                                <i class="fas fa-comments"></i>
+                            </a>
+                        </div>
                         <div class="c">
                             <partial name="_notipartial" />
                         </div>
                         <div class="col-1 d-none d-lg-block">
                             <partial name="_LoginPartial" />
                         </div>
-
                     </div>
+                </div>
+                <div class="site-navigation">
+                    <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu mx-auto">
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">QUAN ĐIỂM - TRANH LUẬN</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">KHOA HỌC CÔNG NGHỆ</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">TÀI CHÍNH</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">NẤU ĂN - ẨM THỰC</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">NHIẾP ẢNH</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Quandiem">THINKING OUT LOUD</a></li>
+                        <li class="has-children active">
+                            <a href="financing.html">TÙY CHỌN KHÁC</a>
+                            <ul class="dropdown">
+                                <li>   <a asp-area="" asp-controller="Home" asp-action="Blog">Bài Viết Mới</a></li>
+                                <li>   <a asp-area="" asp-controller="Account" asp-action="bio">Bài Viết Của Tôi</a></li>
+                                <li><a asp-area="" asp-controller="Home" asp-action="Create">Viết Bài</a></li>
+                                <li class="has-children">
+                                    <a href="#">Trang Cá Nhân</a>
+                                    <ul class="dropdown">
+                                        <li><a href="#">Danh Sách Theo Dõi</a></li>
+                                        <li><a href="#">Liên Hệ</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                      
+                    </ul>
                 </div>
             </div>
         </div>
     </nav>
-
     <!-- Start retroy layout blog posts -->
     @RenderBody()
 

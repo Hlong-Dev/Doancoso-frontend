@@ -24,5 +24,9 @@ namespace Doancoso_frontend.Controllers
         {
             return View();
         }
+        public IActionResult Chat()
+        {
+            return View();
+        }
     }
 }

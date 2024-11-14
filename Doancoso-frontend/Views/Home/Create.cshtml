@@ -127,15 +127,13 @@
 
             function populateCategoriesDropdown(categories) {
                 var dropdown = $('#category');
-                // Xóa tất cả các option hiện có trong dropdown
                 dropdown.empty();
-                // Thêm một option mặc định
                 dropdown.append($('<option>').val('').text('Chọn Category'));
-                // Thêm từng category vào dropdown
                 categories.forEach(function (category) {
-                    dropdown.append($('<option>').val(category.id).text(category.name));
+                    dropdown.append($('<option>').val(category.slug).text(category.name)); // Sử dụng category.slug
                 });
             }
+
 
             ClassicEditor
                 .create(document.querySelector('#content'), {

@@ -5,18 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In</title>
     <style>
-     
+        /* Đặt nền toàn màn hình */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-image: url("https://i.imgur.com/myaai3x.jpeg");
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        /* Container cho form đăng nhập ở giữa */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
 
         .containerr {
+            background-color: rgba(0, 0, 0, 0.8); /* Màu nền đen mờ */
             width: 100%;
             padding-right: var(--bs-gutter-x, 0.75rem);
             padding-left: var(--bs-gutter-x, 0.75rem);
             margin-right: auto;
             margin-left: auto;
             max-width: 540px;
-            border: 1px solid #ccc;
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .containerr {
+            background-color: rgba(0, 0, 0, 0.8); /* Màu nền đen mờ */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+            color: white;
+            text-align: center;
         }
 
         .form-group {
@@ -27,6 +58,7 @@
             .form-group label {
                 display: block;
                 margin-bottom: 5px;
+                color: #ddd;
             }
 
             .form-group input {
@@ -41,16 +73,18 @@
             display: block;
             width: 100%;
             padding: 10px;
-            background-color: #007bff;
+            background-color: rgba(12, 47, 64, 0.9);
+            
             border: none;
             border-radius: 3px;
             color: #fff;
             font-size: 16px;
             cursor: pointer;
+            margin-top: 10px;
         }
 
             .btn-primary:hover {
-                background-color: #000000;
+                background-color: rgba(12, 47, 64, 0.9);
             }
 
         #signInMessage {
@@ -60,29 +94,41 @@
 
         p {
             margin-top: 20px;
+            color: #ddd;
         }
+
+            p a {
+                color: #007bff;
+                text-decoration: none;
+            }
+
+                p a:hover {
+                    text-decoration: underline;
+                }
     </style>
 </head>
 <body>
-    <div style="height: 80px;"></div>
-    <div class="containerr">
-        <h1>Đăng Nhập</h1>
 
-        <form id="signInForm">
-            <div class="form-group">
-                <label for="inputEmail">Địa Chỉ Email</label>
-                <input type="email" id="inputEmail" placeholder="Enter email">
-            </div>
-            <div class="form-group">
-                <label for="inputPassword">Mật Khẩu</label>
-                <input type="password" id="inputPassword" placeholder="Password">
-            </div>
-            <button type="submit" class="btn btn-primary">Đăng Nhập</button>
-        </form>
+    <div class="login-container">
+        <div class="containerr">
+            <h1>Đăng Nhập</h1>
 
-        <div id="signInMessage"></div>
+            <form id="signInForm">
+                <div class="form-group">
+                    <label for="inputEmail">Địa Chỉ Email</label>
+                    <input type="email" id="inputEmail" placeholder="Enter email">
+                </div>
+                <div class="form-group">
+                    <label for="inputPassword">Mật Khẩu</label>
+                    <input type="password" id="inputPassword" placeholder="Password">
+                </div>
+                <button type="submit" class="btn-primary">Đăng Nhập</button>
+            </form>
 
-        <p>Bạn Chưa Có Tài Khoản? <a href="http://localhost:5236/account/signup">Đăng Kí Ngay</a>.</p>
+            <div id="signInMessage"></div>
+
+            <p>Bạn Chưa Có Tài Khoản? <a href="http://localhost:5236/account/signup">Đăng Kí Ngay</a>.</p>
+        </div>
     </div>
 
     <script>
@@ -110,12 +156,10 @@
 
                     if (response.ok) {
                         const data = await response.text();
-                        
 
                         const token = extractTokenFromCookie(data);
-                        // Lưu mã token vào Local Storage
                         localStorage.setItem('token', token);
-                    
+
                         window.location.href = 'http://localhost:5236/';
                     } else {
                         const data = await response.json();
@@ -123,23 +167,15 @@
                     }
 
                     function extractTokenFromCookie(cookieString) {
-                        // Tìm vị trí của chuỗi token trong cookie
                         const tokenStartIndex = cookieString.indexOf('=') + 1;
                         const tokenEndIndex = cookieString.indexOf(';');
-
-                        // Kiểm tra xem có vị trí kết thúc token hay không
                         if (tokenEndIndex === -1) {
-                            
-                            const token = cookieString.slice(tokenStartIndex);
-                            return token;
+                            return cookieString.slice(tokenStartIndex);
                         } else {
-                            // Trích xuất token từ vị trí bắt đầu đến vị trí kết thúc
-                            const token = cookieString.slice(tokenStartIndex, tokenEndIndex);
-                            return token;
+                            return cookieString.slice(tokenStartIndex, tokenEndIndex);
                         }
                     }
 
-                    // Hàm giải mã JWT để lấy các phần tử trong token
                     function parseJwt(token) {
                         try {
                             return JSON.parse(atob(token.split('.')[1]));
@@ -155,5 +191,7 @@
             });
         });
     </script>
+ 
+
 </body>
 </html>

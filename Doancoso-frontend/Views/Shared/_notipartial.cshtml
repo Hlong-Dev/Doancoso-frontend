@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .notificationa-container {
+            margin-left: 4px;
             position: relative;
             display: inline-block;
         }
@@ -49,6 +50,36 @@
             padding: 10px;
         }
 
+            .notificationsa-dropdown .header {
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+                .notificationsa-dropdown .header h4 {
+                    margin-bottom: 13px;
+                    font-weight: 900;
+                    font-size: 24px;
+                }
+
+                .notificationsa-dropdown .header .tabs {
+                    display: flex;
+                    gap: 10px;
+                }
+
+                    .notificationsa-dropdown .header .tabs button {
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        font-size: 14px;
+                        color: #000;
+                    }
+
+                        .notificationsa-dropdown .header .tabs button.active {
+                            font-weight: bold;
+                            color: #214252;
+                        }
+
             .notificationsa-dropdown .notificationa {
                 display: flex;
                 align-items: center;
@@ -73,16 +104,30 @@
             .notificationsa-dropdown .notificationa-text {
                 flex-grow: 1;
             }
+
+        .notificationa-time {
+            font-size: 12px;
+            color: #888;
+        }
     </style>
 </head>
 <body>
     <div class="notificationa-container">
-        <div class="notificationa-icon" id="notificationIcon" onclick="toggleNotificationaDropdown()">
+        <div class="notificationa-icon" id="notificationaIcon" onclick="toggleNotificationaDropdown()">
             <i class="fas fa-bell"></i>
             <span class="badge" id="notificationaBadge">0</span>
         </div>
         <div class="notificationsa-dropdown" id="notificationsaDropdown">
-            <!-- Notifications will be prepended here -->
+            <div class="header">
+                <h4>Thông báo</h4>
+                <div class="tabs">
+                    <button id="allTab" class="active" onclick="showAll()">Tất cả</button>
+                </div>
+            </div>
+            <div id="notificationaList">
+                <!-- Notifications will be prepended here -->
+            </div>
+            <div id="viewAll" style="text-align: center; cursor: pointer; color: #007bff;" onclick="viewAll()">Xem tất cả</div>
         </div>
     </div>
 
@@ -90,24 +135,58 @@
     <script type="text/javascript">
         const notificationaIcon = document.getElementById('notificationaIcon');
         const notificationsaDropdown = document.getElementById('notificationsaDropdown');
-        const notificationBadge = document.getElementById('notificationaBadge');
+        const notificationaBadge = document.getElementById('notificationaBadge');
+        const allTab = document.getElementById('allTab');
+        const notificationaList = document.getElementById('notificationaList');
 
         function toggleNotificationaDropdown() {
             const isDisplayed = notificationsaDropdown.style.display === 'block';
             notificationsaDropdown.style.display = isDisplayed ? 'none' : 'block';
         }
 
-        function displayNotificationa(message, slug) {
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+
+            if (interval > 1) {
+                return interval + " năm trước";
+            }
+            interval = Math.floor(seconds / 2592000);
+            if (interval > 1) {
+                return interval + " tháng trước";
+            }
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) {
+                return interval + " ngày trước";
+            }
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) {
+                return interval + " giờ trước";
+            }
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) {
+                return interval + " phút trước";
+            }
+            return Math.floor(seconds) + " giây trước";
+        }
+
+        function displayNotificationa(message, slug, createdAt, isRead, avatarUrl) {
+            const timeAgoText = timeAgo(createdAt);
+            const notificationaClass = isRead ? 'notificationa' : 'notificationa unread';
+
             const newNotificationa = document.createElement('div');
-            newNotificationa.className = 'notificationa';
+            newNotificationa.className = notificationaClass;
             newNotificationa.innerHTML = `
-                        <img src="path/to/icon.png" alt="User Icon" width="40" height="40">
-                        <div class="notificationa-text">${message}</div>
-                    `;
+                                <img src="${avatarUrl}" alt="User Icon" width="40" height="40" class="cc">
+                                <div class="notificationa-text">
+                                    ${message}
+                                    <div class="notificationa-time">${timeAgoText}</div>
+                                </div>
+                            `;
             newNotificationa.onclick = function () {
                 window.location.href = `http://localhost:5236/Home/single?slug=${slug}`;
             };
-            notificationsaDropdown.prepend(newNotificationa); // Prepend the new notification
+            notificationaList.prepend(newNotificationa); // Prepend the new notification
         }
 
         function fetchNotificationsa(userId) {
@@ -118,16 +197,31 @@
                     "Authorization": "Bearer " + localStorage.getItem('token')
                 },
                 success: function (data) {
-                    data.forEach(notificationa => displayNotificationa(notificationa.message, notificationa.slug));
+                    notificationaList.innerHTML = ''; // Clear existing notifications
+                    data.forEach(notificationa => displayNotificationa(notificationa.message, notificationa.slug, notificationa.createdAt, notificationa.isRead, notificationa.avatarUrl));
                     notificationaBadge.textContent = data.length;
                 },
                 error: function (error) {
-                    console.error("Error fetching notifications: ", error);
+                    console.error("Error fetching notificationsa: ", error);
                 }
             });
         }
 
-        (function initializeNotifications() {
+        function showAll() {
+            allTab.classList.add('active');
+            // Fetch all notifications
+            const token = localStorage.getItem('token');
+            const tokenPayload = decodeJwt(token);
+            const userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+            fetchNotificationsa(userId);
+        }
+
+        function viewAll() {
+            // Handle the view all click event
+            alert('View all clicked');
+        }
+
+        (function initializeNotificationsa() {
             const token = localStorage.getItem('token');
             const tokenPayload = decodeJwt(token);
             const userId = tokenPayload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];

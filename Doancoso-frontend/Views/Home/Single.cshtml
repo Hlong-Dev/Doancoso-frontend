@@ -125,7 +125,7 @@
             <div class="row same-height justify-content-left">
                 <div class="col-md-12">
                     <div class="post-entry text-left">
-                        <span class="d-inline-block mt-1" id="categoryId" style="color :white;"></span>
+                        <span class="d-inline-block mt-1" id="categorySlug" style="color :white;"></span>
                         <div style="height: 25px;"></div>
                         <h1 id="title" class="mb-4"></h1>
 
@@ -384,7 +384,7 @@
 
 
                     // Sử dụng categoryName để hiển thị tên danh mục
-                    $('#categoryId').text(data.categoryId);
+                    $('#categorySlug').text(data.categorySlug);
                     var createdAt = new Date(data.createdAt);
                     var formattedCreatedAt = " - " + createdAt.getDate() + " tháng " + (createdAt.getMonth() + 1) + " năm " + createdAt.getFullYear();
                     $('#createdAt').text(formattedCreatedAt); // Set formatted Created At text
@@ -414,10 +414,10 @@
 
                     // Sau khi lấy chi tiết blog xong, gọi fetchComments để lấy danh sách comment
                     fetchComments();
-                    var categoryId = data.categoryId;
+                    var categorySlug = data.categorySlug;
                     // Gửi yêu cầu AJAX để lấy tên danh mục từ categoryId
-                    $.get('http://localhost:5233/api/Category/' + categoryId, function (category) {
-                        $('#categoryId').text(category.name); // Hiển thị tên danh mục
+                    $.get('http://localhost:5233/api/Category/' + categorySlug, function (category) {
+                        $('#categorySlug').text(category.name); // Hiển thị tên danh mục
                     });
                 });
             }

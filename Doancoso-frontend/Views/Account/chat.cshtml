@@ -1,0 +1,388 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+    <style>
+        body {
+            
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #chat-container {
+            flex: 1;
+            max-height: calc(100vh - 160px); /* Adjusted to leave space for the input bar */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding: 10px 10px 70px 10px; /* Added more padding to the bottom */
+            margin-bottom: 20px; /* Ensure there's space between the chat container and the input */
+        }
+
+
+        #input-container {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            background-color: #242526;
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 1000; /* Ensure the input container stays on top */
+        }
+
+        #messagesList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .message-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            flex-direction: row;
+        }
+
+            .message-item.sent {
+                justify-content: flex-end;
+            }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .message-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 70%;
+        }
+
+        .message-username {
+            font-size: 0.85em;
+            color: #b0b3b8;
+            margin-bottom: 2px;
+        }
+
+        .message-content {
+            padding: 10px;
+            border-radius: 20px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+            .message-content.sent {
+                background-color: #0084ff;
+                color: white;
+                text-align: right;
+            }
+
+            .message-content.received {
+                background-color: #f0f0f0; /* Light grey background */
+                color: black; /* Black text */
+                text-align: left;
+                border-radius: 20px; /* Rounded corners */
+                padding: 10px; /* Padding inside the message bubble */
+                word-wrap: break-word;
+            }
+
+
+        .message-item.sent .message-avatar {
+            margin-left: 10px;
+            margin-right: 0;
+        }
+
+        .message-item.sent .message-content-wrapper {
+            align-items: flex-end;
+        }
+
+        .message-item.received .message-content-wrapper {
+            align-items: flex-start;
+        }
+
+
+        #messageInput {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            background-color: #3a3b3c;
+            color: white;
+            margin-right: 10px;
+        }
+
+            #messageInput:focus {
+                outline: none;
+            }
+
+        #sendButton {
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+            #sendButton:hover {
+                background-color: #007bff;
+            }
+    </style>
+    <style>
+        #room-selection {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+         
+            color: white;
+        }
+
+        .room {
+            display: flex;
+            align-items: center;
+            background-color: #214252;
+            border-radius: 20px;
+            margin: 10px; /* Margin to separate rooms */
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            flex: 0 0 calc(50% - 20px); /* Take up half of the container, minus margins */
+            box-sizing: border-box;
+            height: 120px; /* Fixed height to ensure consistency */
+        }
+
+            .room img {
+                width: 120px;
+                height: 100px;
+                border-radius: 15px;
+                margin-right: 15px;
+                object-fit: cover;
+            }
+
+        .room-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .room-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin: 0;
+            color: white;
+        }
+
+        .room-users {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+            .room-users img {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                margin-right: 5px;
+                object-fit: cover;
+            }
+
+        .room:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="room-selection">
+       
+        <div class="room" onclick="joinRoom('Room1')">
+            <img src="https://i.imgur.com/yUn8v6G.png" alt="Room 1 Image">
+            <div class="room-info">
+                <p class="room-title">Khoa Học - Quan Điểm</p>
+                <div class="room-users">
+                    <img src="user-avatar-1.jpg" alt="User 1">
+                    <img src="user-avatar-2.jpg" alt="User 2">
+                    <!-- Add more user images as needed -->
+                </div>
+            </div>
+        </div>
+        <div class="room" onclick="joinRoom('Room2')">
+            <img src="https://i.imgur.com/dTDU8HN.png" alt="Room 2 Image">
+            <div class="room-info">
+                <p class="room-title">Nấu Ăn - Ẩm Thực</p>
+                <div class="room-users">
+                    <img src="user-avatar-3.jpg" alt="User 3">
+                    <img src="user-avatar-4.jpg" alt="User 4">
+                    <!-- Add more user images as needed -->
+                </div>
+            </div>
+        </div>
+        <div class="room" onclick="joinRoom('Room3')">
+            <img src="https://i.imgur.com/dTDU8HN.png" alt="Room 2 Image">
+            <div class="room-info">
+                <p class="room-title">Nấu Ăn - Ẩm Thực</p>
+                <div class="room-users">
+                    <img src="user-avatar-3.jpg" alt="User 3">
+                    <img src="user-avatar-4.jpg" alt="User 4">
+                    <!-- Add more user images as needed -->
+                </div>
+            </div>
+        </div>
+        <div class="room" onclick="joinRoom('Room4')">
+            <img src="https://i.imgur.com/dTDU8HN.png" alt="Room 2 Image">
+            <div class="room-info">
+                <p class="room-title">Nấu Ăn - Ẩm Thực</p>
+                <div class="room-users">
+                    <img src="user-avatar-3.jpg" alt="User 3">
+                    <img src="user-avatar-4.jpg" alt="User 4">
+                    <!-- Add more user images as needed -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface (Hidden by Default) -->
+    <div id="chat-interface" style="display:none;">
+        <!-- Add this button in the chat interface -->
+        <button id="leaveButton" onclick="leaveRoom()">Leave Room</button>
+
+        <div id="chat-container">
+            <ul id="messagesList"></ul>
+        </div>
+
+        <div id="input-container">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <script>
+        let currentRoom = null;
+        // Connect to SignalR Hub
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5233/chathub", {
+                accessTokenFactory: () => localStorage.getItem("jwtToken") // Assuming your JWT is stored in localStorage
+            })
+            .build();
+
+        // Decode JWT to extract user information
+        const jtoken = localStorage.getItem("jwtToken");
+        const decodedToken = jwt_decode(token);
+
+        // Extract user information (e.g., email, given name, and avatar URL)
+        const userEmail = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+        const userName = decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"] || userEmail;
+        const avatarUrl = decodedToken["AvatarUrl"];
+
+        // Receive message from server
+        connection.on("ReceiveMessage", function (user, message, avatar) {
+            const li = document.createElement("li");
+            li.className = "message-item";
+
+            // Determine if the message is sent by the current user
+            const isCurrentUser = user === userName;
+
+            if (isCurrentUser) {
+                li.classList.add("sent");
+            } else {
+                li.classList.add("received");
+            }
+
+            // Create a wrapper for the message content
+            const messageWrapper = document.createElement("div");
+            messageWrapper.className = "message-content-wrapper";
+
+            // Create a div for the message content
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message-content ${isCurrentUser ? "sent" : "received"}`;
+            messageDiv.textContent = message; // Ensure this is plain text content
+
+            // Append the message content to the wrapper
+            messageWrapper.appendChild(messageDiv);
+
+            // Only append avatar and username if the message is not from the current user
+            if (!isCurrentUser) {
+                // Create an image element for the avatar
+                const img = document.createElement("img");
+                img.src = avatar;
+                img.alt = "avatar";
+                img.className = "message-avatar";
+
+                // Create a div for the username
+                const usernameDiv = document.createElement("div");
+                usernameDiv.className = "message-username";
+                usernameDiv.textContent = user;
+
+                // Append avatar and username to the wrapper
+                messageWrapper.insertBefore(usernameDiv, messageDiv);
+                li.appendChild(img);
+            }
+
+            // Append the message wrapper to the list item
+            li.appendChild(messageWrapper);
+
+            document.getElementById("messagesList").appendChild(li);
+
+            // Automatically scroll to the bottom to see the latest message
+            const chatContainer = document.getElementById("chat-container");
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+        function joinRoom(roomName) {
+            if (currentRoom) {
+                connection.invoke("LeaveRoom", currentRoom).catch(function (err) {
+                    return console.error(err.toString());
+                });
+            }
+
+            connection.invoke("JoinRoom", roomName).catch(function (err) {
+                return console.error(err.toString());
+            });
+
+            currentRoom = roomName;
+
+            // Show the chat interface and hide room selection
+            document.getElementById("room-selection").style.display = "none";
+            document.getElementById("chat-interface").style.display = "block";
+
+            document.getElementById("messagesList").innerHTML = ""; // Clear message list when switching rooms
+        }
+
+        // Start the connection
+        connection.start().catch(function (err) {
+            return console.error(err.toString());
+        });
+
+        // Send message function
+        function sendMessage() {
+            const message = document.getElementById("messageInput").value;
+            if (message.trim() === "" || !currentRoom) return; // Don't send empty messages or if no room is joined
+            connection.invoke("SendMessageToRoom", currentRoom, userName, message, avatarUrl).catch(function (err) {
+                return console.error(err.toString());
+            });
+            document.getElementById("messageInput").value = ""; // Clear input field after sending
+        }
+        function leaveRoom() {
+            if (currentRoom) {
+                connection.invoke("LeaveRoom", currentRoom).catch(function (err) {
+                    return console.error(err.toString());
+                });
+                currentRoom = null;
+
+                // Hide the chat interface and show room selection
+                document.getElementById("room-selection").style.display = "block";
+                document.getElementById("chat-interface").style.display = "none";
+
+                document.getElementById("messagesList").innerHTML = ""; // Clear message list when leaving the room
+            }
+        }
+    </script>
+</body>
+</html>

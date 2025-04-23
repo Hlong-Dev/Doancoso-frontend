@@ -285,7 +285,7 @@
                 // Fetch the list of categories
                 $.get('http://localhost:5233/api/Category', function (response) {
                     response.forEach(function (category) {
-                        categoriesMap[category.id] = category.name;
+                        categoriesMap[category.slug] = category.name;
                     });
                     updateUI();
                 }).fail(function (xhr, status, error) {
@@ -361,8 +361,8 @@
                 return allProducts.slice(startIndex, startIndex + itemsPerPage);
             }
 
-            function getCategoryName(categoryId) {
-                return categoriesMap[categoryId] || "Không xác định";
+            function getCategoryName(categorySlug) {
+                return categoriesMap[categorySlug] || "Không xác định";
             }
 
             function formatCreatedAt(createdAt) {
@@ -394,20 +394,20 @@
                 var blogCountByCategory = {};
 
                 allProducts.forEach(function (product) {
-                    if (!blogCountByCategory.hasOwnProperty(product.categoryId)) {
-                        blogCountByCategory[product.categoryId] = 0;
+                    if (!blogCountByCategory.hasOwnProperty(product.categorySlug)) {
+                        blogCountByCategory[product.categorySlug] = 0;
                     }
-                    blogCountByCategory[product.categoryId]++;
+                    blogCountByCategory[product.categorySlug]++;
                 });
 
-                for (var categoryId in categoriesMap) {
-                    if (categoriesMap.hasOwnProperty(categoryId)) {
-                        var categoryName = categoriesMap[categoryId];
+                for (var categorySlug in categoriesMap) {
+                    if (categoriesMap.hasOwnProperty(categorySlug)) {
+                        var categoryName = categoriesMap[categorySlug];
                         var listItem = $('<li></li>');
-                        var link = $('<a href="#" data-category-id="' + categoryId + '"></a>').text(categoryName);
+                        var link = $('<a href="#" data-category-slug="' + categorySlug + '"></a>').text(categoryName);
 
-                        if (blogCountByCategory.hasOwnProperty(categoryId)) {
-                            var blogCount = blogCountByCategory[categoryId];
+                        if (blogCountByCategory.hasOwnProperty(categorySlug)) {
+                            var blogCount = blogCountByCategory[categorySlug];
                             var blogCountSpan = $('<span></span>').text('(' + blogCount + ')');
                             link.append(blogCountSpan);
                         }
@@ -435,7 +435,7 @@
 
                     var productInfoDiv = $('<div class="product-info"></div>');
 
-                    var categoryElement = $('<span class="category"></span>').text(getCategoryName(product.categoryId));
+                    var categoryElement = $('<span class="category"></span>').text(getCategoryName(product.categorySlug));
                     var titleLink = $('<a class="titleLink" href=""></a>').attr('href', '/Home/single?slug=' + product.slug).text(product.title);
                     var titleElement = $('<h2></h2>').append(titleLink);
                     var readingTime = calculateReadingTime(product.content);
@@ -455,7 +455,7 @@
                         event.preventDefault();
 
                         // Lấy userId từ dữ liệu sản phẩm (product)
-                        var userId = product.userId;
+                        var userId = product.id;
 
                         // Chuyển hướng người dùng đến trang UserProfile với userId truyền qua URL
                         window.location.href = 'http://localhost:5236/Account/UserProfile?userId=' + userId;
@@ -476,16 +476,16 @@
                 // Add click event handler for category links
                 $('.categories a').on('click', function (e) {
                     e.preventDefault();
-                    var categoryId = $(this).data('category-id');
-                    filterByCategory(categoryId);
+                    var categorySlug = $(this).data('category-slug');
+                    filterByCategory(categorySlug);
                 });
             }
 
-            function filterByCategory(categoryId) {
+            function filterByCategory(categorySlug) {
                 currentPage = 1;
-                if (categoryId) {
+                if (categorySlug) {
                     allProducts = allProductsOriginal.filter(function (product) {
-                        return product.categoryId === categoryId;
+                        return product.categorySlug === categorySlug;
                     });
                 } else {
                     allProducts = [...allProductsOriginal];
